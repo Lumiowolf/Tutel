@@ -1,92 +1,169 @@
-# Tutel
+# Projekt wstępny
+
+## 1. Opis funkcjonalny
+Język w założeniu jest oparty na LOGO, języku do nauki programowania, w którym sterujemy żółwiem zostawiającym graficzny ślad swojej ścieżki.
+Mój język składniowo będzie oparty na aktualnie popularnych językach programowania Python i JavaScript.
+Oprócz przyjemniejszej składni, usprawnieniem względem LOGO będzie możliwość tworzenia wielu żółwi w jednym programie, o dowolnym kolorze oraz położeniu początkowym.
+Docelowo język będzie zintegrowany z graficznym interfejsem.
+
+Język będzie obsługiwał:
+* instrukcję warunkową if - {elif} - [else]
+* pętlę for (w wariancie foreach)
+* operatory matematyczne: +, -, *, /, %, ()
+* operatory logiczne: and, or, not, in, ==, !=, >, >=, <, <=, ()
+* tworzenie własnych funkcji i wywoływanie (w tym rekurencyjne)
+* typy danych: turtle, color, position, orientation, int, string, boolean, null
+* wypisywanie danych na standardowe wyjście
+* operacje na żółwiach: idź do przodu, idź do tyłu, obróć się w prawo/lewo o podaną liczbę stopni (domyślnie 90), zmiana koloru i położenia
+* tworzenie list, dodawanie/usuwanie/odczytywanie elementów listy
 
 
+## 2. Przykłady użycia
+| Kod                                                                                                                                                                                                                                                                                                         | Działanie                                                                                                                                    |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `name_1 = turtle()`                                                                                                                                                                                                                                                                                         | Utworzenie żółwia z podstawowymi parametrami                                                                                                 |
+| `name_2 = turtle(color='red')`                                                                                                                                                                                                                                                                              | Utworzenie czerwonego żółwia                                                                                                                 |
+| `name_3 = turtle(color=color(0, 0, 255))`                                                                                                                                                                                                                                                                   | Utworzenie niebieskiego żółwia (RGB)                                                                                                         |
+| `name_4 = turtle(position=(15, 20))`                                                                                                                                                                                                                                                                        | Utworzenie żółwia na zadanej pozycji                                                                                                         |
+| `name_1.color = black`<br>`name_1.color = color(100, 200, 50)`<br>`name_1.position.x = 20`<br>`name_1.position.y = -10`<br>`name_1.orientation = right`<br>`name_1.orientation = 90`                                                                                                                        | Zmiana parametrów żółwia                                                                                                                     |
+| `name_1.forward(10)`                                                                                                                                                                                                                                                                                        | Żółw 'name_1' idzie o 10 kroków naprzód                                                                                                      |
+| `name_1.backward(20)`                                                                                                                                                                                                                                                                                       | Żółw 'name_1' idzie o 20 kroków do tyłu                                                                                                      |
+| `name_1.turn_right()`<br>`name_1.turn_left(15)`                                                                                                                                                                                                                                                             | Żółw 'name_1' skręca w prawo/lewo o $90^o$ (względem aktualnej orientacji)                                                                   |
+| `a =  null`<br>`b = 10`<br>`c = "c"`<br>`d = "text"`<br>`f = true`<br>`g = false`                                                                                                                                                                                                                           | Tworzenie zmiennych<br>Domyślna wartość: null<br>Dopuszczalne typy danych: null, integer, real number, character, string, boolean            |
+| `if(name_1.position.x > 50)`<br>&nbsp;&nbsp;&nbsp;&nbsp;`name_1.turn_right()`<br>`elif(name_1.position.y < -15)`<br>&nbsp;&nbsp;&nbsp;&nbsp;`name_1.turn_left()`<br>`elif(name_2.position.y >= 10)`<br>&nbsp;&nbsp;&nbsp;&nbsp;`name_1.turn_right(20)`<br>`else`<br>&nbsp;&nbsp;&nbsp;&nbsp;`print("else")` | Złożony warunek                                                                                                                              |
+| `if(name_1.color == red and f or not g) {`<br>&nbsp;&nbsp;&nbsp;&nbsp;`name_1.forward(2)`<br>&nbsp;&nbsp;&nbsp;&nbsp;`name_2.backward(4)`<br>`}`                                                                                                                                                            | Warunek z blokiem w klamrach                                                                                                                 |
+| `exampleList = [1, 2, 3, 'a', "text"]`<br>`exampleList.add(2)`<br>`exampleList.add("b")`<br>`exampleList.remove(0)`<br>`print(exampleList[2])`                                                                                                                                                              | Utworzenie listy, dodanie elementu do listy (na koniec), usunięcie elementu spod podanego indeksu, odczytanie elementu spod podanego indeksu |
+| `for(element in list) {`<br>&nbsp;&nbsp;&nbsp;&nbsp;`print(element)`<br>`}`                                                                                                                                                                                                                                 | Wypisz każdy element z listy                                                                                                                 |
+| `foo(param1, param2) => {`<br>&nbsp;&nbsp;&nbsp;&nbsp;`i = 10`<br>&nbsp;&nbsp;&nbsp;&nbsp;`return i + param1 * param2`<br>`}`<br>`bar() => {`<br>&nbsp;&nbsp;&nbsp;&nbsp;`print(foo(50, 20))`<br>`}`<br>                                                                                                    | Definicja i wywołanie funkcji 'foo'                                                                                                          |
+| `fun() => print("debug")`                                                                                                                                                                                                                                                                                | Jednoliniowa funkcja nie wymaga klamer                                                                                                       |
 
-## Getting started
-
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
-
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
-
+## 3. Opis gramatyki
+### 3.1. Konwecje leksykalne
 ```
-cd existing_repo
-git remote add origin https://gitlab-stud.elka.pw.edu.pl/TKOM_22L_PG/Bartosz_Sosnowski/tutel.git
-git branch -M main
-git push -uf origin main
+literal      = string | number | "true" | "false" | "null";
+string       = """, {char | escaping}, """ | "'", {char | escaping}, "'";
+number       = digit | nonZeroDigit, {digit};
+digit        = "0" | nonZeroDigit;
+nonZeroDigit = "1" | ... | "9";
+identifier   = letter, {letter | digit | "_"} | "_", {letter | digit | "_"};
+comment      = "#", {char};
+escaping     = "\", specialChar;
 ```
 
-## Integrate with your tools
+### 3.2. Gramatyka
+```
+program             = {functionDef};
 
-- [ ] [Set up project integrations](https://gitlab-stud.elka.pw.edu.pl/TKOM_22L_PG/Bartosz_Sosnowski/tutel/-/settings/integrations)
+functionDef         = identifier, "(", paramList, ")", "=>", block;
+paramList           = [param, {",", param}];
+param               = normalParam | defaultParam;
+normalParam         = identifier;
+defaultParam        = identifier, "=", literal;
 
-## Collaborate with your team
+block               = "{", {statement}, "}";
+statement           = simpleStatement, ";"
+                    | compoundStatement;
+simpleStatement     = assignment
+                    | functionCall
+                    | returnStatement
+                    | "pass";
+compoundStatement   = ifStatement
+                    | forStatement;
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Automatically merge when pipeline succeeds](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+assignment          = identifier, assignmentOperator, expression;
+assignmentOperator  = "="
+                    | "+="
+                    | "-="
+                    | "*="
+                    | "/="
+                    | "%=";
 
-## Test and Deploy
+functionCall        = identifier, {".", identifier}, "(", argList, ")";
+argList             = [arg, {",", arg}];
+arg                 = normalArg
+                    | keywordArg;
+normalArg           = expression;
+keywordArg          = identifier, "=", expression;
 
-Use the built-in continuous integration in GitLab.
+returnStatement     = "return"
+                    | "return", expression, {",", expression};
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+ifStatement         = "if", "(", expression, ")", (statement | block),
+                      {elifBlock}, [elseBlock];
+elifBlock           = "elif", "(", expression, ")", (statement | block);
+elseBlock           = "else", (statement | block);
 
-***
+forStatement        = "for", "(", identifier, "in", expression, ")",
+                      (statement | block);
 
-# Editing this README
+expression          = expressionPart, {operator, expressionPart};
+expressionPart      = literal
+                    | identifier
+                    | functionCall
+                    | listDef
+                    | listAccess
+                    | "(", expression, ")";
+listDef             = "[", [expression, {",", expression}], "]";
+listAccess          = identifier, "[", number, "]"
+operator            = mathOperator
+                    | logicOperator;
+mathOperator        = "+"
+                    | "-"
+                    | "*"
+                    | "/"
+                    | "//"
+                    | "%";
+logicOperator       = "and"
+                    | "or"
+                    | "in"
+                    | "<"
+                    | "<="
+                    | ">"
+                    | ">="
+                    | "=="
+                    | "!="; 
+```
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!).  Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
+## 4. Opis techniczny
+### 4.1. Wymagania funkcjonalne
+* Interpreter będzie się składał z analizatora leksykalnego i parsera.
+* Lekser będzie odczytywał dane wejściowe (kod użytkownika) ze standardowego strumienia wejściowego, a parser będzie pobierał kolejne tokeny poprzez wywołanie odpowiedniej metody leksera (np. get_next_token()).
+* Zadaniem leksera będzie wydobywanie z kodu kolejnych tekenów.
+* Zadaniem parsera będzie pobieranie od leksera tokenów i składanie z nich kodu według gramatyki.
+* Pobrane identyfikatory funkcji i zmiennych będą przechowywane w słowniku. Dzięki temu będzie można kontrolować niepowtarzalność.
+* 
+* Program będzie uruchamiany przez interpreter Pythona w konsoli, czyli np. `python3 logo.py`. Konsola pozostanie otwarta jedynie do wyświetlania wartości podanej do funkcji `print`.
+* Obiekty i zmienne będą przekazywane do funkcji jako referencja.
+* Niedopuszczalne będzie tworzenie identyfikatorów o takiej samej nazwie jak słowo kluczowe języka lub istniejącej już identyfikator, przy czym najwyższy priorytet mają słowa kluczowe, a następnie nazwy funkcji. To znaczy, że zmienna nie może mieć takiej nazwy jak istniejąca funkcja. Duplikacja identyfikatorów będzie traktowana jako błąd już na etapie interpretacji.
+* Po uruchomieniu programu, zostanie wyświetlony interfejs graficzny z podziałem na część do pisania kodu (prosty, ale przyjemny edytor) oraz na część wyświetlającą wykonanie skryptu.
+* Będzie możliwość ukrycia jednej z tych części i wyświetlenie drugiej na pełnym oknie.
+* Użytkownik będzie mógł utworzyć nowy skrypt, otworzyć skrypt z pliku na dysku i zapisać do pliku.
+* Interfejs będzie miał listę rozwijaną do wyboru funkcji, od której rozpocznie się wykonanie programu.
+* Obsługa błędów:
+    * Błędy leksykalne/gramatyczne: program nie zostanie wykonany, na standardowe wyjści zostanie wypisany pierwszy napotkany błąd wraz z stacktracem.
+    * Błędy wykonania: program przerwie wykonanie w momencie napotkania błędu i wypisze typ błędu oraz stacktrace na standardowe wyjście.
 
-## Suggestions for a good README
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+### 4.2. Wymagania niefunkcjonalne
+* Interpreter będzie napisany w języku Python w wersji 3.10.
+* Do interfejsu graficznego wykorzystam bibliotekę PyQt5 w aktualnie najnowszej wersji.
+* Docelowo aplikacja będzie mogła być uruchomiona na każdym systemie wspierającym Pythona w wybranej wersji i PyQt5. Minimum to Windows 10 i Ubuntu 20.04.
 
-## Name
-Choose a self-explaining name for your project.
+### 4.3. Rozpoznawane tokeny
+```
+"true", "false", "null", """, "'", "#", ";",
+"+", "-", "*", "/", "//", "%",
+"and", "or", "in", "not", "<", "<=", ">", ">=", "==", "!=",
+"(", ")", "{", "}", "[", "]", ",", ".", "=>",
+"=", "+=", "-=", "*=", "/=", "%=",
+"if", "elif", "else", "for", "return", "pass"
+```
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+## 5. Opis testowania
+### 5.1. Testowanie leksera
+Testy jednostkowe sprawdzające wykrycie białych znaków, tokenów, odczytywanie różnych źródeł kodu (np. plik, tekst wpisany bezpośrednio do kodu), funkcję zwracającą kolejne tokeny
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+### 5.2. Testowanie parsera
+Testy jednostkowe sprawdzające parsowanie przykładów wszystkich struktur, włączając w to przypadki rzadkie.
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+### 5.3. Testowanie finalnej aplikacji z GUI
+Testy manualne polegające na sprawdzeniu wyniku przygotowanych skryptów.
