@@ -4,22 +4,26 @@ from io import StringIO
 
 from parameterized import parameterized
 
-from LexerModule.lexer import Lexer, Token, TokenType, keywords
-from LexerModule.tokens import operators, punctuations
+from ErrorHandlerModule.ErrorHandler import ErrorHandler
+from ErrorHandlerModule.ErrorType import IdentifierTooLongLexerException, TextConstTooLongLexerException, CommentTooLongLexerException, \
+    UnknownTokenLexerException, UnterminatedStringLexerException, MAX_COMMENT_LENGTH, MAX_IDENTIFIER_LENGTH, IntegerTooLargeLexerException, \
+    MAX_TEXT_CONST_LENGTH
+from LexerModule.Lexer import Lexer, Token, TokenType, keywords
+from LexerModule.Tokens import operators
 
 
 class TestLexerSimple(unittest.TestCase):
     def test_try_build_etx(self):
         # GIVEN
         source = "\x03"
-        expected = Token(TokenType.T_ETX, '\x03', 0, 0)
-        lex = Lexer(StringIO(source))
+        expected = Token(TokenType.T_ETX, '\x03', 1, 1)
+        lex = Lexer(StringIO(source), ErrorHandler())
 
         # WHEN
-        lex._try_build_etx()
+        token = lex.get_next_token()
 
         # THEN
-        self.assertEqual(expected, lex.token, "ETX not detected correctly.")
+        self.assertEqual(expected, token, "ETX not detected correctly.")
 
     @parameterized.expand([
         ("# test1", " test1"),
@@ -29,14 +33,14 @@ class TestLexerSimple(unittest.TestCase):
     def test_try_build_comment(self, case, expect):
         # GIVEN
         source = case
-        expected = Token(TokenType.T_COMMENT, expect, 0, 0)
-        lex = Lexer(StringIO(source))
+        expected = Token(TokenType.T_COMMENT, expect, 1, 1)
+        lex = Lexer(StringIO(source), ErrorHandler())
 
         # WHEN
-        lex._try_build_comment()
+        token = lex.get_next_token()
 
         # THEN
-        self.assertEqual(expected, lex.token, "Comment not detected correctly.")
+        self.assertEqual(expected, token, "Comment not detected correctly.")
 
     @parameterized.expand([
         ("test1", "test1"),
@@ -51,14 +55,14 @@ class TestLexerSimple(unittest.TestCase):
     def test_try_build_identifier(self, case, expect):
         # GIVEN
         source = case
-        expected = Token(TokenType.T_IDENTIFIER, expect, 0, 0)
-        lex = Lexer(StringIO(source))
+        expected = Token(TokenType.T_IDENTIFIER, expect, 1, 1)
+        lex = Lexer(StringIO(source), ErrorHandler())
 
         # WHEN
-        lex._try_build_identifier_or_keyword()
+        token = lex.get_next_token()
 
         # THEN
-        self.assertEqual(expected, lex.token, "Identifier not detected correctly.")
+        self.assertEqual(expected, token, "Identifier not detected correctly.")
 
     @parameterized.expand([
         ("if ", "if"),
@@ -78,14 +82,14 @@ class TestLexerSimple(unittest.TestCase):
     def test_try_build_keyword(self, case, expect):
         # GIVEN
         source = case
-        expected = Token(keywords[expect], expect, 0, 0)
-        lex = Lexer(StringIO(source))
+        expected = Token(keywords[expect], expect, 1, 1)
+        lex = Lexer(StringIO(source), ErrorHandler())
 
         # WHEN
-        lex._try_build_identifier_or_keyword()
+        token = lex.get_next_token()
 
         # THEN
-        self.assertEqual(expected, lex.token, "Keyword not detected correctly.")
+        self.assertEqual(expected, token, "Keyword not detected correctly.")
 
     @parameterized.expand([
         ("\"test1\"", "test1"),
@@ -100,14 +104,14 @@ class TestLexerSimple(unittest.TestCase):
     def test_try_build_text_const(self, case, expect):
         # GIVEN
         source = case
-        expected = Token(TokenType.T_TEXT_CONST, expect, 0, 0)
-        lex = Lexer(StringIO(source))
+        expected = Token(TokenType.T_TEXT_CONST, expect, 1, 1)
+        lex = Lexer(StringIO(source), ErrorHandler())
 
         # WHEN
-        lex._try_build_text_const()
+        token = lex.get_next_token()
 
         # THEN
-        self.assertEqual(expected, lex.token, "Text const not detected correctly.")
+        self.assertEqual(expected, token, "Text const not detected correctly.")
 
     @parameterized.expand([
         ("0", 0),
@@ -119,14 +123,14 @@ class TestLexerSimple(unittest.TestCase):
     def test_try_build_number(self, case, expect):
         # GIVEN
         source = case
-        expected = Token(TokenType.T_NUMBER, expect, 0, 0)
-        lex = Lexer(StringIO(source))
+        expected = Token(TokenType.T_NUMBER, expect, 1, 1)
+        lex = Lexer(StringIO(source), ErrorHandler())
 
         # WHEN
-        lex._try_build_number()
+        token = lex.get_next_token()
 
         # THEN
-        self.assertEqual(expected, lex.token, "Number not detected correctly.")
+        self.assertEqual(expected, token, "Number not detected correctly.")
 
     @parameterized.expand([
         ("+", "+"), ("+=1234", "+="),
@@ -137,38 +141,23 @@ class TestLexerSimple(unittest.TestCase):
         ("<", "<"), ("<=\3", "<="),
         (">", ">"), (">= ", ">="),
         ("=", "="), ("==", "=="), ("!=", "!="),
-    ])
-    def test_try_build_operator(self, case, expect):
-        # GIVEN
-        source = case
-        expected = Token(operators[expect], expect, 0, 0)
-        lex = Lexer(StringIO(source))
-
-        # WHEN
-        lex._try_build_operator()
-
-        # THEN
-        self.assertEqual(expected, lex.token, "Operator not detected correctly.")
-
-    @parameterized.expand([
-        ("'", "'"), ("\"", "\""),
         ("(", "("), (")\n", ")"),
         ("[", "["), ("] 2", "]"),
         ("{", "{"), ("}2 ", "}"),
         (".", "."), (",a", ","),
-        (";", ";"), (": \t\t\n", ":")
+        (";", ";"), (": \t\t\n", ":"),
     ])
-    def test_try_build_punctuation(self, case, expect):
+    def test_try_build_operator(self, case, expect):
         # GIVEN
         source = case
-        expected = Token(punctuations[expect], expect, 0, 0)
-        lex = Lexer(StringIO(source))
+        expected = Token(operators[expect], expect, 1, 1)
+        lex = Lexer(StringIO(source), ErrorHandler())
 
         # WHEN
-        lex._try_build_punctuation()
+        token = lex.get_next_token()
 
         # THEN
-        self.assertEqual(expected, lex.token, "Punctuation mark not detected correctly.")
+        self.assertEqual(expected, token, "Operator not detected correctly.")
 
 
 class TestLexerComplex(unittest.TestCase):
@@ -176,37 +165,37 @@ class TestLexerComplex(unittest.TestCase):
         (
                 "while true 12 asdf5",
                 [
-                    Token(TokenType.T_WHILE, "while", 0, 0),
-                    Token(TokenType.T_TRUE, "true", 0, 6),
-                    Token(TokenType.T_NUMBER, 12, 0, 11),
-                    Token(TokenType.T_IDENTIFIER, "asdf5", 0, 14),
-                    Token(TokenType.T_ETX, "\x03", 0, 19),
+                    Token(TokenType.T_WHILE, "while", 1, 1),
+                    Token(TokenType.T_TRUE, "true", 1, 7),
+                    Token(TokenType.T_NUMBER, 12, 1, 12),
+                    Token(TokenType.T_IDENTIFIER, "asdf5", 1, 15),
+                    Token(TokenType.T_ETX, "\x03", 1, 20),
                 ]
         ),
         (
                 "   test = 5; 12 + 5 += 77 for i= 0 test2 \3",
                 [
-                    Token(TokenType.T_IDENTIFIER, "test", 0, 3),
-                    Token(TokenType.T_ASSIGNMENT, "=", 0, 8),
-                    Token(TokenType.T_NUMBER, 5, 0, 10),
-                    Token(TokenType.T_SEMICOLON, ";", 0, 11),
-                    Token(TokenType.T_NUMBER, 12, 0, 13),
-                    Token(TokenType.T_PLUS, "+", 0, 16),
-                    Token(TokenType.T_NUMBER, 5, 0, 18),
-                    Token(TokenType.T_PLUS_ASSIGNMENT, "+=", 0, 20),
-                    Token(TokenType.T_NUMBER, 77, 0, 23),
-                    Token(TokenType.T_FOR, "for", 0, 26),
-                    Token(TokenType.T_IDENTIFIER, "i", 0, 30),
-                    Token(TokenType.T_ASSIGNMENT, "=", 0, 31),
-                    Token(TokenType.T_NUMBER, 0, 0, 33),
-                    Token(TokenType.T_IDENTIFIER, "test2", 0, 35),
-                    Token(TokenType.T_ETX, "\x03", 0, 41),
+                    Token(TokenType.T_IDENTIFIER, "test", 1, 4),
+                    Token(TokenType.T_ASSIGNMENT, "=", 1, 9),
+                    Token(TokenType.T_NUMBER, 5, 1, 11),
+                    Token(TokenType.T_SEMICOLON, ";", 1, 12),
+                    Token(TokenType.T_NUMBER, 12, 1, 14),
+                    Token(TokenType.T_PLUS, "+", 1, 17),
+                    Token(TokenType.T_NUMBER, 5, 1, 19),
+                    Token(TokenType.T_PLUS_ASSIGNMENT, "+=", 1, 21),
+                    Token(TokenType.T_NUMBER, 77, 1, 24),
+                    Token(TokenType.T_FOR, "for", 1, 27),
+                    Token(TokenType.T_IDENTIFIER, "i", 1, 31),
+                    Token(TokenType.T_ASSIGNMENT, "=", 1, 32),
+                    Token(TokenType.T_NUMBER, 0, 1, 34),
+                    Token(TokenType.T_IDENTIFIER, "test2", 1, 36),
+                    Token(TokenType.T_ETX, "\x03", 1, 42),
                 ]
         ),
     ])
     def test_get_next_token_one_line(self, source, expected):
         # GIVEN
-        lex = Lexer(StringIO(source))
+        lex = Lexer(StringIO(source), ErrorHandler())
         result = []
 
         # WHEN
@@ -223,25 +212,25 @@ class TestLexerComplex(unittest.TestCase):
         (
                 "while(not test) {\n\tprint(12345);\n}\x03",
                 [
-                    Token(TokenType.T_WHILE, "while", 0, 0),
-                    Token(TokenType.T_LEFT_BRACKET, "(", 0, 5),
-                    Token(TokenType.T_NOT, "not", 0, 6),
-                    Token(TokenType.T_IDENTIFIER, "test", 0, 10),
-                    Token(TokenType.T_RIGHT_BRACKET, ")", 0, 14),
-                    Token(TokenType.T_LEFT_CURLY_BRACKET, "{", 0, 16),
-                    Token(TokenType.T_IDENTIFIER, "print", 1, 1),
+                    Token(TokenType.T_WHILE, "while", 1, 1),
                     Token(TokenType.T_LEFT_BRACKET, "(", 1, 6),
-                    Token(TokenType.T_NUMBER, 12345, 1, 7),
-                    Token(TokenType.T_RIGHT_BRACKET, ")", 1, 12),
-                    Token(TokenType.T_SEMICOLON, ";", 1, 13),
-                    Token(TokenType.T_RIGHT_CURLY_BRACKET, "}", 2, 0),
-                    Token(TokenType.T_ETX, "\x03", 2, 1),
+                    Token(TokenType.T_NOT, "not", 1, 7),
+                    Token(TokenType.T_IDENTIFIER, "test", 1, 11),
+                    Token(TokenType.T_RIGHT_BRACKET, ")", 1, 15),
+                    Token(TokenType.T_LEFT_CURLY_BRACKET, "{", 1, 17),
+                    Token(TokenType.T_IDENTIFIER, "print", 2, 2),
+                    Token(TokenType.T_LEFT_BRACKET, "(", 2, 7),
+                    Token(TokenType.T_NUMBER, 12345, 2, 8),
+                    Token(TokenType.T_RIGHT_BRACKET, ")", 2, 13),
+                    Token(TokenType.T_SEMICOLON, ";", 2, 14),
+                    Token(TokenType.T_RIGHT_CURLY_BRACKET, "}", 3, 1),
+                    Token(TokenType.T_ETX, "\x03", 3, 2),
                 ]
         ),
     ])
     def test_get_next_token_multiple_lines(self, source, expected):
         # GIVEN
-        lex = Lexer(StringIO(source))
+        lex = Lexer(StringIO(source), ErrorHandler())
         result = []
 
         # WHEN
@@ -259,60 +248,128 @@ class TestLexerErrorHandling(unittest.TestCase):
     @parameterized.expand([
         ('\1', '\1'),
         ("\2", "\2"),
-        ("==!", "==!"),
-        ("++", "++"),
-        ("!==", "!=="),
-        ("%%", "%%"),
     ])
     def test_detect_unknown_token(self, case, expect):
         # GIVEN
         source = case
-        expected = Token(TokenType.T_UNKNOWN, expect, 0, 0)
-        lex = Lexer(StringIO(source))
-        # Silence error logs
-        # lex._error_handler.logger.setLevel(logging.CRITICAL)
+        expected = Token(TokenType.T_UNKNOWN, expect, 1, 1)
+        error_handler = ErrorHandler()
+        error_handler.logger.setLevel(logging.CRITICAL)
+        lex = Lexer(StringIO(source), error_handler)
 
-        # WHEN
-        lex.get_next_token()
+        try:
+            # WHEN
+            lex.get_next_token()
 
-        # THEN
-        self.assertEqual(expected, lex.token, "T_UNKNOWN not detected correctly.")
+            # THEN
+            self.fail(f"Unknown token didn't throw an exception. ({case}, {expect})")
+        except UnknownTokenLexerException as e:
+            self.assertEqual(expected, e.token, "T_ILLEGAL not detected correctly.")
 
     @parameterized.expand([
         ('"\n', '\n'),
         ('\'\3', '\3'),
     ])
-    def test_detect_string_const_break(self, case, expect):
+    def test_detect_text_const_break(self, case, expect):
         # GIVEN
         source = case
-        expected = Token(TokenType.T_ILLEGAL, expect, 0, 1)
-        lex = Lexer(StringIO(source))
-        # Silence error logs
-        # lex._error_handler.logger.setLevel(logging.CRITICAL)
+        expected = Token(TokenType.T_ILLEGAL, expect, 1, 2)
+        error_handler = ErrorHandler()
+        error_handler.logger.setLevel(logging.CRITICAL)
+        lex = Lexer(StringIO(source), error_handler)
 
-        # WHEN
-        lex.get_next_token()
+        try:
+            # WHEN
+            lex.get_next_token()
 
-        # THEN
-        self.assertEqual(expected, lex.token, "T_ILLEGAL not detected correctly.")
+            # THEN
+            self.fail(f"Unterminated text const didn't throw an exception. ({case}, {expect})")
+        except UnterminatedStringLexerException as e:
+            self.assertEqual(expected, e.token, "T_ILLEGAL not detected correctly.")
 
     @parameterized.expand([
-        ('asdfghjkasdfghjkasdfghjkasdfghjkasdfghjkasdfghjkasdfghjkasdfghjka',
-         'asdfghjkasdfghjkasdfghjkasdfghjkasdfghjkasdfghjkasdfghjkasdfghjka...'),
+        ("'" + "a" * (MAX_TEXT_CONST_LENGTH + 1) + "'",
+         "a" * MAX_TEXT_CONST_LENGTH),
+    ])
+    def test_detect_text_const_too_long(self, case, expect):
+        # GIVEN
+        source = case
+        expected = Token(TokenType.T_ILLEGAL, expect, 1, 1)
+        error_handler = ErrorHandler()
+        error_handler.logger.setLevel(logging.CRITICAL)
+        lex = Lexer(StringIO(source), error_handler)
+
+        try:
+            # WHEN
+            lex.get_next_token()
+
+            # THEN
+            self.fail("Too long text const didn't throw an exception.")
+        except TextConstTooLongLexerException as e:
+            self.assertEqual(expected, e.token, "T_ILLEGAL not detected correctly.")
+
+    @parameterized.expand([
+        ("b" * (MAX_IDENTIFIER_LENGTH + 1),
+         "b" * MAX_IDENTIFIER_LENGTH),
     ])
     def test_detect_identifier_too_long(self, case, expect):
         # GIVEN
         source = case
-        expected = Token(TokenType.T_ILLEGAL, expect, 0, 0)
-        lex = Lexer(StringIO(source))
-        # Silence error logs
-        # lex._error_handler.logger.setLevel(logging.CRITICAL)
+        expected = Token(TokenType.T_ILLEGAL, expect, 1, 1)
+        error_handler = ErrorHandler()
+        error_handler.logger.setLevel(logging.CRITICAL)
+        lex = Lexer(StringIO(source), error_handler)
 
-        # WHEN
-        lex.get_next_token()
+        try:
+            # WHEN
+            lex.get_next_token()
 
-        # THEN
-        self.assertEqual(expected, lex.token, "T_ILLEGAL not detected correctly.")
+            # THEN
+            self.fail("Too long identifier didn't throw an exception.")
+        except IdentifierTooLongLexerException as e:
+            self.assertEqual(expected, e.token, "T_ILLEGAL not detected correctly.")
+
+    @parameterized.expand([
+        ("#" + "c" * (MAX_COMMENT_LENGTH + 1),
+         "c" * MAX_COMMENT_LENGTH),
+    ])
+    def test_detect_comment_too_long(self, case, expect):
+        # GIVEN
+        source = case
+        expected = Token(TokenType.T_ILLEGAL, expect, 1, 1)
+        error_handler = ErrorHandler()
+        error_handler.logger.setLevel(logging.CRITICAL)
+        lex = Lexer(StringIO(source), error_handler)
+
+        try:
+            # WHEN
+            lex.get_next_token()
+
+            # THEN
+            self.fail("Too long comment didn't throw an exception.")
+        except CommentTooLongLexerException as e:
+            self.assertEqual(expected, e.token, "T_ILLEGAL not detected correctly.")
+
+    @parameterized.expand([
+        ("2147483648",
+         2147483648),
+    ])
+    def test_detect_integer_too_large(self, case, expect):
+        # GIVEN
+        source = case
+        expected = Token(TokenType.T_ILLEGAL, expect, 1, 1)
+        error_handler = ErrorHandler()
+        error_handler.logger.setLevel(logging.CRITICAL)
+        lex = Lexer(StringIO(source), error_handler)
+
+        try:
+            # WHEN
+            lex.get_next_token()
+
+            # THEN
+            self.fail("Too large integer didn't throw an exception.")
+        except IntegerTooLargeLexerException as e:
+            self.assertEqual(expected, e.token, "T_ILLEGAL not detected correctly.")
 
 
 if __name__ == '__main__':

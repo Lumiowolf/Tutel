@@ -1,7 +1,7 @@
 from collections import namedtuple
 from enum import Enum, auto
 
-Token = namedtuple("Token", ["type", "value", "line", "position"])
+Token = namedtuple("Token", ["type", "value", "line", "column"])
 
 
 # noinspection PyArgumentList
@@ -86,6 +86,17 @@ operators = {
     ">": TokenType.T_GREATER_THAN,
     "=": TokenType.T_ASSIGNMENT,
 
+    ":": TokenType.T_COLON,
+    ";": TokenType.T_SEMICOLON,
+    "(": TokenType.T_LEFT_BRACKET,
+    ")": TokenType.T_RIGHT_BRACKET,
+    "[": TokenType.T_LEFT_SQUARE_BRACKET,
+    "]": TokenType.T_RIGHT_SQUARE_BRACKET,
+    "{": TokenType.T_LEFT_CURLY_BRACKET,
+    "}": TokenType.T_RIGHT_CURLY_BRACKET,
+    ".": TokenType.T_DOT,
+    ",": TokenType.T_COMMA,
+
     # Double characters
     "<=": TokenType.T_LESS_EQUAL_THAN,
     ">=": TokenType.T_GREATER_EQUAL_THAN,
@@ -99,29 +110,15 @@ operators = {
     "%=": TokenType.T_MODULUS_ASSIGNMENT,
 }
 
-punctuations = {
-    "'": TokenType.T_QUOTE,
-    "\"": TokenType.T_DOUBLE_QUOTE,
-    ":": TokenType.T_COLON,
-    ";": TokenType.T_SEMICOLON,
-    "(": TokenType.T_LEFT_BRACKET,
-    ")": TokenType.T_RIGHT_BRACKET,
-    "[": TokenType.T_LEFT_SQUARE_BRACKET,
-    "]": TokenType.T_RIGHT_SQUARE_BRACKET,
-    "{": TokenType.T_LEFT_CURLY_BRACKET,
-    "}": TokenType.T_RIGHT_CURLY_BRACKET,
-    ".": TokenType.T_DOT,
-    ",": TokenType.T_COMMA,
-}
 
 operator_parts = [
-    # ";", "(", ")", "[", "]", "{", "}", ".", ",", "'", "\"",
-    "<", ">", "=", "!", "+", "-", "*", "/", "%",
-    # "<=", ">=", "==", "!=", "+=", "-=", "*=", "/=", "//", "%=",
+    "<", ">", "=", "!", "+", "-", "*", "/", "%", ":", ";", "(", ")", "[", "]", "{", "}", ".", ",",
 ]
 
-special_escaping = {
+escaped_chars = {
     'n': '\n',
     'r': '\r',
     't': '\t',
+    '"': '"',
+    '\'': '\'',
 }
