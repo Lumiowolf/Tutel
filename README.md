@@ -1,4 +1,4 @@
-# Projekt wstępny
+# Projekt TKOM - interpreter języka Tutel
 
 ## 1. Opis funkcjonalny
 
@@ -41,8 +41,8 @@ Język będzie obsługiwał:
 | `if(name_1.color == red and f or not g) {`<br>&nbsp;&nbsp;&nbsp;&nbsp;`name_1.forward(2)`<br>&nbsp;&nbsp;&nbsp;&nbsp;`name_2.backward(4)`<br>`}`                                                                                                                                                            | Warunek z blokiem w klamrach                                                                                                                 |
 | `exampleList = [1, 2, 3, 'a', "text"]`<br>`exampleList.add(2)`<br>`exampleList.add("b")`<br>`exampleList.remove(0)`<br>`print(exampleList[2])`                                                                                                                                                              | Utworzenie listy, dodanie elementu do listy (na koniec), usunięcie elementu spod podanego indeksu, odczytanie elementu spod podanego indeksu |
 | `for(element in list) {`<br>&nbsp;&nbsp;&nbsp;&nbsp;`print(element)`<br>`}`                                                                                                                                                                                                                                 | Wypisz każdy element z listy                                                                                                                 |
-| `foo(param1, param2): {`<br>&nbsp;&nbsp;&nbsp;&nbsp;`i = 10`<br>&nbsp;&nbsp;&nbsp;&nbsp;`return i + param1 * param2`<br>`}`<br>`bar(): {`<br>&nbsp;&nbsp;&nbsp;&nbsp;`print(foo(50, 20))`<br>`}`<br>                                                                                                        | Definicja i wywołanie funkcji 'foo'                                                                                                          |
-| `fun(): print("debug")`                                                                                                                                                                                                                                                                                     | Jednoliniowa funkcja nie wymaga klamer                                                                                                       |
+| `foo(param1, param2) {`<br>&nbsp;&nbsp;&nbsp;&nbsp;`i = 10`<br>&nbsp;&nbsp;&nbsp;&nbsp;`return i + param1 * param2`<br>`}`<br>`bar(): {`<br>&nbsp;&nbsp;&nbsp;&nbsp;`print(foo(50, 20))`<br>`}`<br>                                                                                                        | Definicja i wywołanie funkcji 'foo'                                                                                                          |
+| `fun() {print("debug")}`                                                                                                                                                                                                                                                                                     | Drugi przykład funkcji klamer                                                                                                       |
 
 ## 3. Opis gramatyki
 
@@ -64,19 +64,19 @@ escaping     = "\", specialChar;
 ```
 program             = {functionDef};
 
-functionDef         = identifier, "(", paramList, ")", ":", block;
-paramList           = [identifier, {",", identifier}];
+functionDef         = identifier, "(", paramsList, ")", block;
+paramsList          = [identifier, {",", identifier}];
 
 block               = "{", {statement}, "}";
 statement           = simpleStatement, ";"
                     | compoundStatement;
-simpleStatement     = assignment
-                    | expression
+simpleStatement     = expression, [assignment]
                     | returnStatement;
 compoundStatement   = ifStatement
-                    | forStatement;
+                    | forStatement
+                    | whileStatement;
 
-assignment          = identifier, assignmentOperator, expression;
+assignment          = assignmentOperator, expression;
 assignmentOperator  = "="
                     | "+="
                     | "-="
@@ -84,64 +84,57 @@ assignmentOperator  = "="
                     | "/="
                     | "%=";
 
-returnStatement     = "return"
-                    | "return", expression, {",", expression};
+returnStatement     = "return", returnValues;
+returnValues        = [expression, {",", expression}];
 
-ifStatement         = "if", "(", expression, ")", (statement | block),
+ifStatement         = "if", "(", expression, ")", compoundStmtBody,
                       {elifBlock}, [elseBlock];
-elifBlock           = "elif", "(", expression, ")", (statement | block);
-elseBlock           = "else", (statement | block);
+elifBlock           = "elif", "(", expression, ")", compoundStmtBody;
+elseBlock           = "else", compoundStmtBody;
 
-forStatement        = "for", "(", identifier, "in", expression, ")",
-                      (statement | block);
+forStatement        = "for", "(", identifier, "in", expression, ")", compoundStmtBody;
+whileStatement      = "while", "(", expression, ")", compoundStmtBody;
 
-expression          = disjunction;
-disjunction         = conjunction, {"or", conjunction}
-                    | conjunction;
-conjunction         = inversion, {"and", inversion}
-                    | inversion;
-inversion           = "not", inversion
-                    | comparison;
-comparison          = compare_op_sum, {compare_op_sum};
-compare_op_sum      = eq_sum;
-                    | noteq_sum;
-                    | lte_sum;
-                    | lt_sum;
-                    | gte_sum;
-                    | gt_sum;
-                    | notin_sum;
-                    | in_sum;
-eq_sum              = "==", sum;
-noteq_sum           = "!=", sum;
-lte_sum             = "<=", sum;
-lt_sum              = "<", sum;
-gte_sum             = ">=", sum;
-gt_sum              = ">", sum;
-notin_sum           = "not", "in", sum;
-in_sum              = "in", sum;
-sum                 = sum, "+", term
-                    | sum, "-", term
-                    | term;
-term                = term, "*", factor
-                    | term, "/", factor
-                    | term, "//", factor
-                    | term, "%", factor
-                    | factor;
-factor              = "+" factor
-                    | "-" factor
-                    | primary;
-primary             = primary, ".", identifier
-                    | primary, "(", [arguments], ")"
-                    | primary, "[", number, "]"
-                    | atom;
-arguments           = [expression, {",", expression}];
-atom                = identifier
-                    | literal
+compoundStmtBody    = statement
+                    | block;
+
+expression          = orExpr, {"or", orExpr};
+orExpr              = andExpr, {"and", andExpr};
+andExpr             = {"not"}, negateExpr;
+negateExpr          = compExpr, {compOperator, compExpr};
+compOperator        = "=="
+                    | "!="
+                    | "<="
+                    | "<"
+                    | ">="
+                    | ">"
+                    | "in";
+compExpr					  = sumExpr, {sumOperator, sumExpr};
+sumOperator		      = "+"
+                    | "-";
+sumExpr             = mulExpr, {mulOperator, mulExpr};
+mulOperator         = "*"
+                    | "/"
+                    | "//"
+                    | "%";
+mulExpr             = {sign}, atom;
+sign                = "+"
+                    | "-";
+atom                = identifier, {complex}
+                    | parenthesis
                     | list
-                    | listAccess;
+                    | number
+                    | string;
+complex             = dotOperator
+                    | funCall
+                    | listElement;
+dotOperator         = ".", identifier;
+funCall             = "(", {arguments}, ")";
+arguments           = expression, {",", expression};
+listElement         = "[", expression, "]";
 
+parenthesis         = "(", expression, ")";
 list                = "[", [expression, {",", expression}], "]";
-listAccess          = identifier, "[", number, "]"
 ```
 
 ## 4. Opis techniczny
@@ -253,12 +246,12 @@ T_UNKNOWN:    symbol nieznany
     * liczby,
     * operatorów,
     * znaków interpunkcyjnych.
-* Testy jednostkowe sprawdzające rozpoznanie różnych tokenów bardziej skomplikowanych sekwencjach:
+* Testy jednostkowe sprawdzające rozpoznanie różnych tokenów w bardziej skomplikowanych sekwencjach:
     * jednoliniowych,
     * wieloliniowych.
-* Testy jednostkowe sprawdzające kontrolę błędów, czyli wykrycie tokenów:
+* Testy jednostkowe sprawdzające kontrolę błędów, czyli rzucanie błędów i wykrywanie tokenów:
     * T_UNKNOWN - nierozpoznany symbol,
-    * T_ILLEGAL - symbol niedozwolony (przerwanie stałej tekstowej znakiem nowej linii lub ETX, przekroczenie maksymalnej długości identyfikatora).
+    * T_ILLEGAL - symbol niedozwolony (przerwanie stałej tekstowej znakiem nowej linii lub ETX, przekroczenie maksymalnej długości identyfikatora/komentarza/stałej tekstowej, przekroczenie maksymalnego romiaru liczby itp.).
 
 ### 5.2. Testowanie parsera
 
