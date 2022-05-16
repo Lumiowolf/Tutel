@@ -1,7 +1,7 @@
 import logging
 import time
 
-from ErrorHandlerModule.ErrorType import LexerException
+from ErrorHandlerModule.ErrorType import LexerException, ParserException
 
 
 class ErrorHandler:
@@ -13,6 +13,6 @@ class ErrorHandler:
         ch.setFormatter(formatter)
         self.logger.addHandler(ch)
 
-    def handler_error(self, error: LexerException):
+    def handler_error(self, error: LexerException | ParserException):
         self.logger.error(error)
-        raise error
+        error.make_action()
