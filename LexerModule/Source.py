@@ -18,18 +18,17 @@ class Source:
             self.line += 1
             self.column = 1
         elif self.char == '\r':
-            self._get_next()
             if self.next == '\n':
                 self._get_next()
             self.line += 1
             self.column = 1
-        elif self.next == '':
-            self.next = '\x03'
-            self.column += 1
         else:
             self.column += 1
         self._get_next()
 
     def _get_next(self):
-        self.char = self.next
-        self.next = self.source.read(1)
+        if self.next == '':
+            self.char = '\x03'
+        else:
+            self.char = self.next
+            self.next = self.source.read(1)
