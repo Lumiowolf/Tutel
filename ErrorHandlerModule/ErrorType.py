@@ -85,6 +85,11 @@ class UnknownEscapingLexerException(LexerException):
         return msg.encode("unicode-escape").decode()
 
 
+###################
+# Parser exceptions
+###################
+
+
 class ParserException(Exception):
     def __init__(self, method: str, token: Token) -> None:
         self.method = method
@@ -93,6 +98,25 @@ class ParserException(Exception):
 
     def make_action(self):
         raise self
+
+
+class MissingFunctionBlockException(ParserException):
+    def __str__(self) -> str:
+        msg = f"{self.base_msg}" \
+              f"{self.method}: " \
+              "missing 'function body (block or statement) " \
+              f"instead got '{self.token.value}' " \
+              f"at {self.token.line}:{self.token.column}"
+        return msg.encode("unicode-escape").decode()
+
+
+class FunctionRedefinitionException(ParserException):
+    def __str__(self) -> str:
+        msg = f"{self.base_msg}" \
+              f"{self.method}: " \
+              f"redefinition of function '{self.token.value}' " \
+              f"at {self.token.line}:{self.token.column}"
+        return msg.encode("unicode-escape").decode()
 
 
 class MissingLeftBracketException(ParserException):
@@ -177,7 +201,7 @@ class MissingBodyException(ParserException):
     def __str__(self) -> str:
         msg = f"{self.base_msg}" \
               f"{self.method}: " \
-              "missing statement body" \
+              "missing statement body " \
               f"at {self.token.line}:{self.token.column}"
         return msg.encode("unicode-escape").decode()
 
@@ -191,20 +215,20 @@ class MissingIteratorException(ParserException):
         return msg.encode("unicode-escape").decode()
 
 
-class MissingIterableException(ParserException):
-    def __str__(self) -> str:
-        msg = f"{self.base_msg}" \
-              f"{self.method}: " \
-              "missing iterable" \
-              f"at {self.token.line}:{self.token.column}"
-        return msg.encode("unicode-escape").decode()
-
-
 class MissingKeywordInException(ParserException):
     def __str__(self) -> str:
         msg = f"{self.base_msg}" \
               f"{self.method}: " \
               "missing 'in' keyword " \
+              f"at {self.token.line}:{self.token.column}"
+        return msg.encode("unicode-escape").decode()
+
+
+class MissingIterableException(ParserException):
+    def __str__(self) -> str:
+        msg = f"{self.base_msg}" \
+              f"{self.method}: " \
+              "missing iterable" \
               f"at {self.token.line}:{self.token.column}"
         return msg.encode("unicode-escape").decode()
 

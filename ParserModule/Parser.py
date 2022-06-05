@@ -1,41 +1,77 @@
+import logging
+
 from ErrorHandlerModule.ErrorHandler import ErrorHandler
-from ErrorHandlerModule.ErrorType import MissingLeftBracketException, MissingRightBracketException, \
-    MissingIdentifierAfterCommaException, \
-    MissingRightCurlyBracketException, MissingSemicolonException, MissingRightSideOfAssignmentException, \
-    MissingConditionException, \
-    MissingBodyException, MissingIteratorException, MissingKeywordInException, MissingIterableException, \
-    ExprMissingRightSideException, MissingIdentifierAfterDotException, \
-    MissingRightSquereBracketException, MissingExpressionAfterCommaException
+from ErrorHandlerModule.ErrorType import (
+    MissingLeftBracketException,
+    MissingRightBracketException,
+    MissingIdentifierAfterCommaException,
+    MissingRightCurlyBracketException,
+    MissingSemicolonException,
+    MissingRightSideOfAssignmentException,
+    MissingConditionException,
+    MissingBodyException,
+    MissingIteratorException,
+    MissingKeywordInException,
+    MissingIterableException,
+    ExprMissingRightSideException,
+    MissingIdentifierAfterDotException,
+    MissingRightSquereBracketException,
+    MissingExpressionAfterCommaException,
+    MissingFunctionBlockException,
+    FunctionRedefinitionException,
+)
 from LexerModule.Lexer import Lexer
-from LexerModule.Tokens import TokenType
-from ParserModule.Program import Program, Function, Identifier, Statement, Assignment, Expression, \
-    ReturnStatement, IfStatement, ForStatement, WhileStatement, ElifBlock, ElseBlock, OrExpr, AndExpr, NegateExpression, \
-    DotOperator, Parenthesis, FunCall, ListElement, List, String, Integer, BoolTrue, BoolFalse, Null
+from LexerModule.Tokens import TokenType, Token, TOKEN_VALUE_TYPES
+from ParserModule.Classes import (
+    Program, Function, Block,
+    Identifier,
+    Statement,
+    Assignment,
+    Expression,
+    ReturnStatement,
+    IfStatement, ElifBlock, ElseBlock,
+    ForStatement,
+    WhileStatement,
+    OrExpr, AndExpr, Negate,
+    DotOperator, FunCall, ListElement, List, String, Integer, Boolean, Null,
+)
 from ParserModule.Remapper import assignment_mapper, comp_mapper, sum_mapper, mul_mapper
+
+
+class LexerInterface:
+    def __init__(self, lexer: Lexer) -> None:
+        self.lexer = lexer
+
+    def get_next_token(self) -> Token:
+        return self.lexer.get_next_token()
+
+    @property
+    def token(self) -> Token:
+        return self.lexer.token
 
 
 class Parser:
     def __init__(self, lexer: Lexer, error_handler: ErrorHandler) -> None:
-        self.lexer = lexer
+        self.lexer = LexerInterface(lexer)
         self.lexer.get_next_token()
         self.functions: dict[str, Function] = {}
         self.error_handler = error_handler
 
-    def check_and_consume(self, type: TokenType) -> bool:
-        if not self.token_is(type):
+    def check_and_consume(self, token_type: TokenType) -> bool:
+        if not self.token_is(token_type):
             return False
         self.lexer.get_next_token()
         return True
 
-    def token_is(self, type: TokenType) -> bool:
-        return self.lexer.token.type == type
-
-    def check_and_return(self, type: TokenType):
-        if not self.token_is(type):
+    def check_and_return(self, token_type: TokenType) -> TOKEN_VALUE_TYPES:
+        if not self.token_is(token_type):
             return None
         value = self.lexer.token.value
         self.lexer.get_next_token()
         return value
+
+    def token_is(self, token_type: TokenType) -> bool:
+        return self.lexer.token.type == token_type
 
     def parse(self) -> Program:
         while self.try_parse_function_def():
@@ -44,8 +80,14 @@ class Parser:
         return Program(self.functions)
 
     def try_parse_function_def(self) -> bool:
-        if not (function_name := self.check_and_return(TokenType.T_IDENTIFIER)):
+        if not self.token_is(TokenType.T_IDENTIFIER):
             return False
+
+        if self.lexer.token.value in self.functions:
+            self.error_handler.handler_error(
+                FunctionRedefinitionException(self.try_parse_function_def.__name__, self.lexer.token))
+
+        function_name = self.check_and_return(TokenType.T_IDENTIFIER)
 
         if not self.check_and_consume(TokenType.T_LEFT_BRACKET):
             self.error_handler.handler_error(
@@ -57,9 +99,11 @@ class Parser:
             self.error_handler.handler_error(
                 MissingRightBracketException(self.try_parse_function_def.__name__, self.lexer.token))
 
-        block = self.try_parse_block()
+        if (block := self.try_parse_block()) is None:
+            self.error_handler.handler_error(
+                MissingFunctionBlockException(self.try_parse_function_def.__name__, self.lexer.token))
 
-        self.functions[function_name] = Function(params, block)
+        self.functions[function_name] = Function(Identifier(function_name), params, block)
 
         return True
 
@@ -80,7 +124,7 @@ class Parser:
         return params
 
     def try_parse_block(self) -> list[Statement] | None:
-        block: list[Statement] = []
+        block = Block()
         instruction: Statement
 
         if not self.check_and_consume(TokenType.T_LEFT_CURLY_BRACKET):
@@ -186,7 +230,7 @@ class Parser:
             self.error_handler.handler_error(
                 MissingRightBracketException(self.try_parse_if_statement.__name__, self.lexer.token))
 
-        if not (body := self.try_parse_compound_statement_body()):
+        if (body := self.try_parse_compound_statement_body()) is None:
             self.error_handler.handler_error(
                 MissingBodyException(self.try_parse_if_statement.__name__, self.lexer.token))
 
@@ -299,7 +343,7 @@ class Parser:
         block: list[Statement]
         statement: Statement
 
-        if block := self.try_parse_block():
+        if (block := self.try_parse_block()) is not None:
             return block
 
         if statement := self.try_parse_statement():
@@ -347,7 +391,7 @@ class Parser:
             return None
 
         if negate:
-            return NegateExpression(expr)
+            return Negate(expr)
 
         return expr
 
@@ -355,7 +399,7 @@ class Parser:
         if not (left_expr := self.try_parse_comp_expr()):
             return None
 
-        while comp_type := comp_mapper.get(self.lexer.token.type):
+        if comp_type := comp_mapper.get(self.lexer.token.type):
             self.lexer.get_next_token()
             if not (right_expr := self.try_parse_comp_expr()):
                 self.error_handler.handler_error(
@@ -410,7 +454,7 @@ class Parser:
             return None
 
         if negate:
-            return NegateExpression(expr)
+            return Negate(expr)
 
         return expr
 
@@ -435,18 +479,15 @@ class Parser:
 
         if self.token_is(TokenType.T_TRUE):
             self.lexer.get_next_token()
-            return BoolTrue()
+            return Boolean(True)
 
         if self.token_is(TokenType.T_FALSE):
             self.lexer.get_next_token()
-            return BoolFalse()
+            return Boolean(False)
 
         if self.token_is(TokenType.T_NULL):
             self.lexer.get_next_token()
             return Null()
-
-        if self.token_is(TokenType.T_NUMBER):
-            return Integer(self.check_and_return(TokenType.T_NUMBER))
 
         return None
 
@@ -522,7 +563,7 @@ class Parser:
             self.error_handler.handler_error(
                 MissingRightBracketException(self.try_parse_parenthesis.__name__, self.lexer.token))
 
-        return Parenthesis(expr)
+        return expr
 
     def try_parse_list(self) -> Expression | None:
         if not self.check_and_consume(TokenType.T_LEFT_SQUARE_BRACKET):
@@ -531,13 +572,16 @@ class Parser:
         elements: list[Expression] = []
 
         if not (element := self.try_parse_expression()):
+            if not self.check_and_consume(TokenType.T_RIGHT_SQUARE_BRACKET):
+                self.error_handler.handler_error(
+                    MissingRightSquereBracketException(self.try_parse_list.__name__, self.lexer.token))
             return List(elements)
         elements.append(element)
 
         while self.check_and_consume(TokenType.T_COMMA):
             if not (element := self.try_parse_expression()):
                 self.error_handler.handler_error(
-                    MissingIdentifierAfterCommaException(self.try_parse_list.__name__, self.lexer.token))
+                    MissingExpressionAfterCommaException(self.try_parse_list.__name__, self.lexer.token))
 
             elements.append(element)
 
