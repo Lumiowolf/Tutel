@@ -101,7 +101,7 @@ compoundStmtBody    = statement
 expression          = orExpr, {"or", orExpr};
 orExpr              = andExpr, {"and", andExpr};
 andExpr             = {"not"}, negateExpr;
-negateExpr          = compExpr, {compOperator, compExpr};
+negateExpr          = compExpr, [compOperator, compExpr];
 compOperator        = "=="
                     | "!="
                     | "<="
@@ -109,8 +109,8 @@ compOperator        = "=="
                     | ">="
                     | ">"
                     | "in";
-compExpr					  = sumExpr, {sumOperator, sumExpr};
-sumOperator		      = "+"
+compExpr            = sumExpr, {sumOperator, sumExpr};
+sumOperator         = "+"
                     | "-";
 sumExpr             = mulExpr, {mulOperator, mulExpr};
 mulOperator         = "*"
@@ -142,37 +142,34 @@ list                = "[", [expression, {",", expression}], "]";
 ### 4.1. Wymagania funkcjonalne
 
 * Interpreter będzie się składał z analizatora leksykalnego i parsera.
-* Lekser będzie odczytywał dane wejściowe (kod użytkownika) ze strumienia wejściowego (io.StringIO), a parser będzie
-  pobierał kolejne tokeny poprzez wywołanie odpowiedniej metody leksera (get_next_token()).
+* Lekser będzie odczytywał dane wejściowe (kod użytkownika) ze strumienia wejściowego (`typing.TextIO`), a parser będzie
+  pobierał kolejne tokeny poprzez wywołanie odpowiedniej metody leksera (`get_next_token()`).
 * Zadaniem leksera będzie wydobywanie z kodu kolejnych tekenów.
 * Zadaniem parsera będzie pobieranie od leksera tokenów i składanie z nich kodu według gramatyki.
-* Pobrane identyfikatory funkcji i zmiennych będą przechowywane w słowniku. Dzięki temu będzie można kontrolować
+* Pobrane identyfikatory funkcji będą przechowywane w słowniku. Dzięki temu będzie można kontrolować
   niepowtarzalność.
 * Program będzie uruchamiany przez interpreter Pythona w konsoli, czyli np. `python3 tutel.py`.
-* Konsola pozostanie otwarta jedynie do wyświetlania wartości podanej do funkcji `print` oraz wczytywania danych od
+* Konsola pozostanie otwarta do wyświetlania wartości podanej do funkcji `print` i błądów
+  leksykalnych/składniowych/wykonania oraz wczytywania danych od
   użytkownika przez funkcję `input`.
 * Obiekty i zmienne będą przekazywane do funkcji jako referencja.
-* Niedopuszczalne będzie tworzenie identyfikatorów o takiej samej nazwie jak słowo kluczowe języka lub istniejący już
-  identyfikator, przy czym najwyższy priorytet mają słowa kluczowe, a następnie nazwy funkcji. To znaczy, że zmienna nie
-  może mieć takiej samej nazwy jak istniejąca funkcja. Duplikacja identyfikatorów będzie traktowana jako błąd już na
-  etapie interpretacji.
+* Niedopuszczalne będzie tworzenie funkcji i zmiennych o takiej samej nazwie jak słowa kluczowe języka oraz funkcje wbudowane.
+* Niedopuszczalne będzie wielokrotne definiowanie funkcji zdefiniowanych przez użytkownika.
 * Po uruchomieniu programu zostanie wyświetlony interfejs graficzny z podziałem na część do pisania kodu (prosty, ale
   przyjemny edytor) oraz na część wyświetlającą wykonanie skryptu.
 * Będzie możliwość ukrycia jednej z tych części i wyświetlenie drugiej w pełnym oknie.
-* Użytkownik będzie mógł utworzyć nowy skrypt, otworzyć skrypt z pliku na dysku i zapisać do pliku.
+* Użytkownik będzie mógł utworzyć nowy skrypt, otworzyć skrypt z pliku na dysku i zapisać swój skrypt do pliku.
 * Interfejs będzie miał listę rozwijaną do wyboru funkcji, od której rozpocznie się wykonanie programu.
 * Obsługa błędów:
-    * Błędy leksera: program nie zostanie wykonany, na standardowe wyjście zostaną wypisane napotkane błędy leksykalne
+    * Błędy leksera/parsera: program nie zostanie wykonany, na standardowe wyjście wypisany pierwszy napotkany błąd leksykalne/gramatyczne
       wraz z położeniem w pliku.
-    * Błędy prasera: program nie zostanie wykonany, na standardowe wyjście zostaną wypisany pierwszy napotkany błąd
-      gramatyczny wraz z położeniem w pliku.
     * Błędy wykonania: program przerwie wykonanie w momencie napotkania błędu i wypisze typ błędu oraz stacktrace na
       standardowe wyjście.
 
 ### 4.2. Wymagania niefunkcjonalne
 
 * Interpreter będzie napisany w języku Python v3.10.
-* Do interfejsu graficznego wykorzystam bibliotekę PyQt5 w aktualnie najnowszej wersji.
+* Do interfejsu graficznego użyta zostanie biblioteka PyQt5 w aktualnie najnowszej wersji.
 * Docelowo aplikacja będzie mogła być uruchomiona na każdym systemie wspierającym Pythona w wybranej wersji i PyQt5.
   Minimum to Windows 10 i Ubuntu 20.04.
 
@@ -213,7 +210,6 @@ T_NULL:                 "null"
 T_QUOTE:                "'"
 T_DOUBLE_QUOTE:         '"'
 T_COMMENT:              "#"
-T_COLON:                ":"
 T_SEMICOLON:            ";"
 T_ESCAPE:               "\"
 T_LEFT_BRACKET:         "("
@@ -251,7 +247,8 @@ T_UNKNOWN:    symbol nieznany
     * wieloliniowych.
 * Testy jednostkowe sprawdzające kontrolę błędów, czyli rzucanie błędów i wykrywanie tokenów:
     * T_UNKNOWN - nierozpoznany symbol,
-    * T_ILLEGAL - symbol niedozwolony (przerwanie stałej tekstowej znakiem nowej linii lub ETX, przekroczenie maksymalnej długości identyfikatora/komentarza/stałej tekstowej, przekroczenie maksymalnego romiaru liczby itp.).
+    * T_ILLEGAL - symbol niedozwolony (przerwanie stałej tekstowej znakiem nowej linii lub ETX, przekroczenie
+      maksymalnej długości identyfikatora/komentarza/stałej tekstowej, przekroczenie maksymalnego romiaru liczby itp.).
 
 ### 5.2. Testowanie parsera
 
