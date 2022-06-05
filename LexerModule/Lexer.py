@@ -14,7 +14,7 @@ from ErrorHandlerModule.ErrorType import (
     MAX_TEXT_CONST_LENGTH,
     MAX_COMMENT_LENGTH,
     MAX_INTEGER,
-                                          )
+)
 from LexerModule.Source import Source
 from LexerModule.Tokens import *
 
@@ -48,8 +48,6 @@ class Lexer:
 
         self.token = Token(TokenType.T_UNKNOWN, self.source.char, self.source.line, self.source.column)
         self._error_handler.handler_error(UnknownTokenLexerException(self.token))
-        self.source.get_next_char()
-        return self.token
 
     def _skip_whites(self) -> None:
         while self.source.char.isspace():

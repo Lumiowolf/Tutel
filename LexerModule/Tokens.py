@@ -3,6 +3,8 @@ from enum import Enum, auto
 
 Token = namedtuple("Token", ["type", "value", "line", "column"])
 
+TOKEN_VALUE_TYPES = str | int
+
 
 # noinspection PyArgumentList
 class TokenType(Enum):
@@ -41,7 +43,6 @@ class TokenType(Enum):
     T_QUOTE = auto()
     T_DOUBLE_QUOTE = auto()
     T_COMMENT = auto()
-    T_COLON = auto()
     T_SEMICOLON = auto()
     T_ESCAPE = auto()
     T_LEFT_BRACKET = auto()
@@ -86,7 +87,6 @@ operators = {
     ">": TokenType.T_GREATER_THAN,
     "=": TokenType.T_ASSIGNMENT,
 
-    ":": TokenType.T_COLON,
     ";": TokenType.T_SEMICOLON,
     "(": TokenType.T_LEFT_BRACKET,
     ")": TokenType.T_RIGHT_BRACKET,
@@ -109,7 +109,6 @@ operators = {
     "//": TokenType.T_INT_DIVIDE,
     "%=": TokenType.T_MODULUS_ASSIGNMENT,
 }
-
 
 operator_parts = [
     "<", ">", "=", "!", "+", "-", "*", "/", "%", ":", ";", "(", ")", "[", "]", "{", "}", ".", ",",
