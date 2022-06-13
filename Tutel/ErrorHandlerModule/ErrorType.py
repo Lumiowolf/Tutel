@@ -1,4 +1,4 @@
-from LexerModule.Tokens import Token
+from Tutel.LexerModule.Tokens import Token
 
 MAX_IDENTIFIER_LENGTH = 64
 MAX_TEXT_CONST_LENGTH = 1024
@@ -6,13 +6,24 @@ MAX_COMMENT_LENGTH = 1024
 MAX_INTEGER = 2147483647
 
 
-class LexerException(Exception):
+class TutelException(Exception):
+    def make_action(self):
+        raise self
+
+
+class Exit(TutelException):
+    pass
+
+
+####################
+# Lexer exceptions #
+####################
+
+
+class LexerException(TutelException):
     def __init__(self, token: Token) -> None:
         self.token = token
         self.base_msg = "Lexical error: "
-
-    def make_action(self):
-        raise self
 
 
 class UnknownTokenLexerException(LexerException):
@@ -85,19 +96,16 @@ class UnknownEscapingLexerException(LexerException):
         return msg.encode("unicode-escape").decode()
 
 
-###################
-# Parser exceptions
-###################
+#####################
+# Parser exceptions #
+#####################
 
 
-class ParserException(Exception):
+class ParserException(TutelException):
     def __init__(self, method: str, token: Token) -> None:
         self.method = method
         self.token = token
         self.base_msg = "Syntax error: "
-
-    def make_action(self):
-        raise self
 
 
 class MissingFunctionBlockException(ParserException):
@@ -251,11 +259,144 @@ class MissingIdentifierAfterDotException(ParserException):
         return msg.encode("unicode-escape").decode()
 
 
-class MissingRightSquereBracketException(ParserException):
+class MissingRightSquareBracketException(ParserException):
     def __str__(self) -> str:
         msg = f"{self.base_msg}" \
               f"{self.method}: " \
               "missing ']', " \
               f"instead got '{self.token.value}' " \
               f"at {self.token.line}:{self.token.column}"
+        return msg.encode("unicode-escape").decode()
+
+
+##########################
+# Interpreter exceptions #
+##########################
+
+
+class InterpreterException(TutelException):
+    def __init__(self) -> None:
+        self.base_msg = "Execution error: "
+
+
+class NotIterableException(InterpreterException):
+    def __init__(self, type_name) -> None:
+        super().__init__()
+        self.type_name = type_name
+
+    def __str__(self) -> str:
+        msg = f"{self.base_msg}" \
+              f"'{self.type_name}' " \
+              "object is not iterable"
+        return msg.encode("unicode-escape").decode()
+
+
+class CannotAssignException(InterpreterException):
+    def __init__(self, value) -> None:
+        super().__init__()
+        self.value = value
+
+    def __str__(self) -> str:
+        msg = f"{self.base_msg}" \
+              f"object at {self.value.position[0]}:{self.value.position[1]} " \
+              "is not assignable"
+        return msg.encode("unicode-escape").decode()
+
+
+class NotDefinedException(InterpreterException):
+    def __init__(self, name) -> None:
+        super().__init__()
+        self.name = name
+
+    def __str__(self) -> str:
+        msg = f"{self.base_msg}" \
+              f"'{self.name}' " \
+              "is not defined"
+        return msg.encode("unicode-escape").decode()
+
+
+class UnsupportedOperandException(InterpreterException):
+    def __init__(self, l_type, r_type, operator) -> None:
+        super().__init__()
+        self.l_type = l_type
+        self.r_type = r_type
+        self.operator = operator
+
+    def __str__(self) -> str:
+        msg = f"{self.base_msg}" \
+              f"unsupported operand type(s) for {self.operator}: " \
+              f"{self.l_type} and {self.r_type}"
+        return msg.encode("unicode-escape").decode()
+
+
+class BadOperandForUnaryException(InterpreterException):
+    def __init__(self, type_name) -> None:
+        super().__init__()
+        self.type = type_name
+
+    def __str__(self) -> str:
+        msg = f"{self.base_msg}" \
+              f"bad operand type for unary -: {self.type}"
+        return msg.encode("unicode-escape").decode()
+
+
+class AttributeException(InterpreterException):
+    def __init__(self, type_name, value) -> None:
+        super().__init__()
+        self.type_name = type_name
+        self.value = value
+
+    def __str__(self) -> str:
+        msg = f"{self.base_msg}" \
+              f"'{self.type_name}' object has no attribute '{self.value}'"
+        return msg.encode("unicode-escape").decode()
+
+
+class MismatchedArgsCountException(InterpreterException):
+    def __init__(self, fun_name, got_number=None, expected_number=None) -> None:
+        super().__init__()
+        self.fun_name = fun_name
+        self.expected_number = expected_number
+        self.got_number = got_number
+
+    def __str__(self) -> str:
+        if self.expected_number is None:
+            msg = f"{self.base_msg}" \
+                  f"{self.fun_name}() got wrong number of arguments"
+        else:
+            msg = f"{self.base_msg}" \
+                  f"{self.fun_name}() takes {self.expected_number} arguments but {self.got_number} were given"
+        return msg.encode("unicode-escape").decode()
+
+
+class OutOfRangeException(InterpreterException):
+    def __str__(self) -> str:
+        msg = f"{self.base_msg}" \
+              f"list index out of range"
+        return msg.encode("unicode-escape").decode()
+
+
+class UnknownException(InterpreterException):
+    def __init__(self, e: Exception) -> None:
+        super().__init__()
+        self.exception = e
+
+    def __str__(self) -> str:
+        msg = f"{self.base_msg}" \
+              f"unknown exception occurred (probably caused by builtin function), " \
+              f"message: {self.exception}"
+        return msg.encode("unicode-escape").decode()
+
+
+class NothingToRunException(InterpreterException):
+    def __str__(self) -> str:
+        msg = f"{self.base_msg}" \
+              f"nothing to run"
+        return msg.encode("unicode-escape").decode()
+
+
+class RecursionException(InterpreterException):
+    def __str__(self) -> str:
+        msg = f"{self.base_msg}" \
+              f"maximum recursion depth exceeded"
         return msg.encode("unicode-escape").decode()

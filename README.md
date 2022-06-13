@@ -4,12 +4,12 @@
 
 Język w założeniu jest oparty na LOGO, języku do nauki programowania, w którym sterujemy żółwiem zostawiającym graficzny
 ślad swojej ścieżki.
-Mój język składniowo będzie oparty na aktualnie popularnych językach programowania Python i JavaScript.
-Oprócz przyjemniejszej składni usprawnieniem względem LOGO będzie możliwość tworzenia wielu żółwi w jednym programie, o
-dowolnym kolorze oraz położeniu początkowym.
-Docelowo język będzie zintegrowany z graficznym interfejsem.
+Mój język składniowo jest oparty na aktualnie popularnych językach programowania Python i JavaScript.
+Oprócz przyjemniejszej składni (względem LOGO) usprawnieniem będzie możliwość tworzenia wielu żółwi w jednym programie, o
+różnych kolorach, położeniu i kącie obrotu.
+Język jest zintegrowany z graficznym interfejsem, który wyświetla efekty działania skryptów.
 
-Język będzie obsługiwał:
+Język obsługuje:
 
 * instrukcję warunkową if - {elif} - [else]
 * pętlę for oraz while
@@ -17,32 +17,30 @@ Język będzie obsługiwał:
 * operatory logiczne: and, or, not, in, ==, !=, >, >=, <, <=, ()
 * operatory przypisania: =, +=, -=, *=, /=, %=
 * tworzenie własnych funkcji i wywoływanie (w tym rekurencyjne)
-* typy danych: turtle, color, position, orientation, int, string, boolean, null
+* typy danych: Turtle, Color (enum), Position, Orientation, int, string, boolean, null
 * wypisywanie danych na standardowe wyjście
 * wprowadzanie danych przez standardowe wejście
-* operacje na żółwiach: idź do przodu, idź do tyłu, obróć się w prawo/lewo o podaną liczbę stopni (domyślnie 90), zmiana
-  koloru i położenia
-* tworzenie list, dodawanie/usuwanie/odczytywanie elementów listy
+* operacje na żółwiach: idź do przodu, obróć się w prawo/lewo o $90^o$ lub inną podaną, zmiana koloru, położenia i kąta
+  obrotu
+* tworzenie list, dodawanie/odczytywanie elementów listy
 
 ## 2. Przykłady użycia
 
-| Kod                                                                                                                                                                                                                                                                                                         | Działanie                                                                                                                                    |
-|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------|
-| `name_1 = turtle()`                                                                                                                                                                                                                                                                                         | Utworzenie żółwia z podstawowymi parametrami                                                                                                 |
-| `name_2 = turtle(color='red')`                                                                                                                                                                                                                                                                              | Utworzenie czerwonego żółwia                                                                                                                 |
-| `name_3 = turtle(color=color(0, 0, 255))`                                                                                                                                                                                                                                                                   | Utworzenie niebieskiego żółwia (RGB)                                                                                                         |
-| `name_4 = turtle(position=(15, 20))`                                                                                                                                                                                                                                                                        | Utworzenie żółwia na zadanej pozycji                                                                                                         |
-| `name_1.color = black`<br>`name_1.color = color(100, 200, 50)`<br>`name_1.position.x = 20`<br>`name_1.position.y = -10`<br>`name_1.orientation = right`<br>`name_1.orientation = 90`                                                                                                                        | Zmiana parametrów żółwia                                                                                                                     |
-| `name_1.forward(10)`                                                                                                                                                                                                                                                                                        | Żółw 'name_1' idzie o 10 kroków naprzód                                                                                                      |
-| `name_1.backward(20)`                                                                                                                                                                                                                                                                                       | Żółw 'name_1' idzie o 20 kroków do tyłu                                                                                                      |
-| `name_1.turn_right()`<br>`name_1.turn_left(15)`                                                                                                                                                                                                                                                             | Żółw 'name_1' skręca w prawo/lewo o $90^o$ (względem aktualnej orientacji)                                                                   |
-| `a = null`<br>`b = 10`<br>`c = "c"`<br>`d = "text"`<br>`f = true`<br>`g = false`                                                                                                                                                                                                                            | Tworzenie zmiennych<br>Domyślna wartość: null<br>Dopuszczalne typy danych: null, integer, real number, character, string, boolean            |
-| `if(name_1.position.x > 50)`<br>&nbsp;&nbsp;&nbsp;&nbsp;`name_1.turn_right()`<br>`elif(name_1.position.y < -15)`<br>&nbsp;&nbsp;&nbsp;&nbsp;`name_1.turn_left()`<br>`elif(name_2.position.y >= 10)`<br>&nbsp;&nbsp;&nbsp;&nbsp;`name_1.turn_right(20)`<br>`else`<br>&nbsp;&nbsp;&nbsp;&nbsp;`print("else")` | Złożony warunek                                                                                                                              |
-| `if(name_1.color == red and f or not g) {`<br>&nbsp;&nbsp;&nbsp;&nbsp;`name_1.forward(2)`<br>&nbsp;&nbsp;&nbsp;&nbsp;`name_2.backward(4)`<br>`}`                                                                                                                                                            | Warunek z blokiem w klamrach                                                                                                                 |
-| `exampleList = [1, 2, 3, 'a', "text"]`<br>`exampleList.add(2)`<br>`exampleList.add("b")`<br>`exampleList.remove(0)`<br>`print(exampleList[2])`                                                                                                                                                              | Utworzenie listy, dodanie elementu do listy (na koniec), usunięcie elementu spod podanego indeksu, odczytanie elementu spod podanego indeksu |
-| `for(element in list) {`<br>&nbsp;&nbsp;&nbsp;&nbsp;`print(element)`<br>`}`                                                                                                                                                                                                                                 | Wypisz każdy element z listy                                                                                                                 |
-| `foo(param1, param2) {`<br>&nbsp;&nbsp;&nbsp;&nbsp;`i = 10`<br>&nbsp;&nbsp;&nbsp;&nbsp;`return i + param1 * param2`<br>`}`<br>`bar(): {`<br>&nbsp;&nbsp;&nbsp;&nbsp;`print(foo(50, 20))`<br>`}`<br>                                                                                                        | Definicja i wywołanie funkcji 'foo'                                                                                                          |
-| `fun() {print("debug")}`                                                                                                                                                                                                                                                                                     | Drugi przykład funkcji klamer                                                                                                       |
+| Kod                                                                                                                                                                                                                                                                                                                                 | Działanie                                                                                                                         |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------|
+| `name_1 = Turtle();`                                                                                                                                                                                                                                                                                                                | Utworzenie żółwia z podstawowymi parametrami                                                                                      |
+| `name_1.setColor(Color.Black);`                                                                                                                                                                                                                                                                                                     | Zmiana koloru                                                                                                                     |
+| `name_1.setPosition(100, 200);`                                                                                                                                                                                                                                                                                                     | Zmiana pozycji                                                                                                                    |
+| `name_1.setOrientation(45);`                                                                                                                                                                                                                                                                                                        | Zmiana orientacji                                                                                                                 |
+| `name_1.forward(10);`                                                                                                                                                                                                                                                                                                               | Żółw 'name_1' idzie o 10 kroków naprzód                                                                                           |
+| `name_1.turnRight();`<br>`name_1.turnLeft();`                                                                                                                                                                                                                                                                                       | Żółw 'name_1' skręca w prawo/lewo o $90^o$ (względem aktualnej orientacji)                                                        |
+| `a = null;`<br>`b = 10;`<br>`c = "c";`<br>`d = "text";`<br>`f = true;`<br>`g = false;`                                                                                                                                                                                                                                              | Tworzenie zmiennych<br>Domyślna wartość: null<br>Dopuszczalne typy danych: null, integer, real number, character, string, boolean |
+| `pos_x = name_1.position.x;`<br>`if(pos_x > 50) {`<br>&nbsp;&nbsp;&nbsp;&nbsp;`name_1.turnRight();`<br>`}`<br>`elif(pos_x < -15) {`<br>&nbsp;&nbsp;&nbsp;&nbsp;`name_1.turnLeft();`<br>`}`<br>`elif(pos_x >= 10) {`<br>&nbsp;&nbsp;&nbsp;&nbsp;`name_1.turnRight();`<br>`}`<br>`else {`<br>&nbsp;&nbsp;&nbsp;&nbsp;`print("else");`<br>`}` | Złożony warunek                                                                                                                   |
+| `if(a == 5 and b < 10) {`<br>&nbsp;&nbsp;&nbsp;&nbsp;`name_1.forward(2);`<br>`}`                                                                                                                                                                                                                                                    | Warunek z blokiem w klamrach                                                                                                      |
+| `exampleList = [1, 2, 3, 'a', "text"];`<br>`exampleList.append(2);`<br>`exampleList.append("b");`<br>`print(exampleList[2]);`                                                                                                                                                                                                       | Utworzenie listy, dodanie elementu do listy (na koniec), odczytanie elementu spod podanego indeksu                                |
+| `for(element in list) {`<br>&nbsp;&nbsp;&nbsp;&nbsp;`print(element);`<br>`}`                                                                                                                                                                                                                                                        | Wypisz każdy element z listy                                                                                                      |
+| `foo(param1, param2) {`<br>&nbsp;&nbsp;&nbsp;&nbsp;`i = 10;`<br>&nbsp;&nbsp;&nbsp;&nbsp;`return i + param1 * param2;`<br>`}`<br>`bar() {`<br>&nbsp;&nbsp;&nbsp;&nbsp;`print(foo(50, 20));`<br>`}`<br>                                                                                                                               | Definicja i wywołanie funkcji 'foo'                                                                                               |
+| `fun() {`<br>&nbsp;&nbsp;&nbsp;&nbsp;`print("debug");`<br>`}`                                                                                                                                                                                                                                                                       | Drugi przykład funkcji                                                                                                 |
 
 ## 3. Opis gramatyki
 
@@ -141,36 +139,37 @@ list                = "[", [expression, {",", expression}], "]";
 
 ### 4.1. Wymagania funkcjonalne
 
-* Interpreter będzie się składał z analizatora leksykalnego i parsera.
-* Lekser będzie odczytywał dane wejściowe (kod użytkownika) ze strumienia wejściowego (`typing.TextIO`), a parser będzie
-  pobierał kolejne tokeny poprzez wywołanie odpowiedniej metody leksera (`get_next_token()`).
-* Zadaniem leksera będzie wydobywanie z kodu kolejnych tekenów.
-* Zadaniem parsera będzie pobieranie od leksera tokenów i składanie z nich kodu według gramatyki.
-* Pobrane identyfikatory funkcji będą przechowywane w słowniku. Dzięki temu będzie można kontrolować
-  niepowtarzalność.
-* Program będzie uruchamiany przez interpreter Pythona w konsoli, czyli np. `python3 tutel.py`.
-* Konsola pozostanie otwarta do wyświetlania wartości podanej do funkcji `print` i błądów
-  leksykalnych/składniowych/wykonania oraz wczytywania danych od
-  użytkownika przez funkcję `input`.
-* Obiekty i zmienne będą przekazywane do funkcji jako referencja.
-* Niedopuszczalne będzie tworzenie funkcji i zmiennych o takiej samej nazwie jak słowa kluczowe języka oraz funkcje wbudowane.
-* Niedopuszczalne będzie wielokrotne definiowanie funkcji zdefiniowanych przez użytkownika.
-* Po uruchomieniu programu zostanie wyświetlony interfejs graficzny z podziałem na część do pisania kodu (prosty, ale
-  przyjemny edytor) oraz na część wyświetlającą wykonanie skryptu.
-* Będzie możliwość ukrycia jednej z tych części i wyświetlenie drugiej w pełnym oknie.
-* Użytkownik będzie mógł utworzyć nowy skrypt, otworzyć skrypt z pliku na dysku i zapisać swój skrypt do pliku.
-* Interfejs będzie miał listę rozwijaną do wyboru funkcji, od której rozpocznie się wykonanie programu.
+* Projekt składa się z 4 modułów. Trzy z nich dotyczą języka i są to moduły: analizator leksykalny, analizator
+  składniowy i interpretera. Czwarty moduł to interfejs graficzny (GUI).
+* Lekser odczytuje dane wejściowe (kod użytkownika) ze strumienia wejściowego (`typing.TextIO`), a parser pobiera
+  kolejne tokeny poprzez wywołanie odpowiedniej metody leksera (`get_next_token()`).
+* Zadaniem leksera jest wydobywanie z kodu kolejnych tekenów.
+* Zadaniem parsera jest pobieranie od leksera tokenów i składanie z nich kodu według gramatyki.
+* Pobrane identyfikatory funkcji są przechowywane w słowniku. Dzięki temu jest możliwa kontrolowa niepowtarzalność.
+* Program jest uruchamiany przez interpreter Pythona w konsoli jako moduł `python3 -m Tutel`.
+* Konsola pozostaje otwarta do wyświetlania wartości podanej do funkcji `print` oraz wczytywania danych od użytkownika
+  przez funkcję `input`.
+* Obiekty i zmienne są przekazywane do funkcji jako referencja.
+* Niedopuszczalne jest tworzenie funkcji i zmiennych o takiej samej nazwie jak słowa kluczowe języka oraz funkcje
+  wbudowane.
+* Niedopuszczalne jest wielokrotne definiowanie funkcji zdefiniowanych przez użytkownika.
+* Po uruchomieniu programu zostaje wyświetlony interfejs graficzny z podziałem na część do pisania kodu oraz część
+  wyświetlającą wykonanie skryptu. Możliwe jest dowolne dostosowanie podziału okna na te dwa elementy.
+* Jest możliwość ukrycia jednej z tych części i wyświetlenie drugiej w pełnym oknie.
+* Użytkownik może utworzyć nowy skrypt, otworzyć skrypt z pliku na dysku i zapisać swój skrypt do pliku.
+* Interfejs przy uruchomieniu wyświetla listę rozwijaną do wyboru funkcji, od której rozpocznie się wykonanie programu.
 * Obsługa błędów:
-    * Błędy leksera/parsera: program nie zostanie wykonany, na standardowe wyjście wypisany pierwszy napotkany błąd leksykalne/gramatyczne
-      wraz z położeniem w pliku.
-    * Błędy wykonania: program przerwie wykonanie w momencie napotkania błędu i wypisze typ błędu oraz stacktrace na
-      standardowe wyjście.
+    * Błędy leksera/parsera: program nie zostanie wykonany, rzucony zostanie odpowiedni wyjątek przy pierwszym
+      napotkanym błędzie leksykalnym/gramatycznym wraz z położeniem w pliku.
+    * Błędy wykonania: program przerwie wykonanie w momencie napotkania błędu i rzuci odpowiedni wyjątek, który może być
+      złapany na poziomie GUI.
 
 ### 4.2. Wymagania niefunkcjonalne
 
-* Interpreter będzie napisany w języku Python v3.10.
-* Do interfejsu graficznego użyta zostanie biblioteka PyQt5 w aktualnie najnowszej wersji.
-* Docelowo aplikacja będzie mogła być uruchomiona na każdym systemie wspierającym Pythona w wybranej wersji i PyQt5.
+* Projekt został napisany w języku Python v3.10.
+* Do interfejsu graficznego użyta została biblioteka PySide6 (bibliotekę niemal bliźniaczą do PyQt6) w aktualnie
+  najnowszej wersji.
+* Docelowo aplikacja będzie mogła być uruchomiona na każdym systemie wspierającym Pythona w wybranej wersji i PySide6.
   Minimum to Windows 10 i Ubuntu 20.04.
 
 ### 4.3. Rozpoznawane tokeny
@@ -231,6 +230,10 @@ T_UNKNOWN:    symbol nieznany
 
 ## 5. Opis testowania
 
+W celu przetestowania aplikacji zostało wykonane 368 testów jednostkowych, które zapewniły pokrycie kodu na poziomie
+97%.
+Dodatkowo do testów manualnych zostały napisane 4 przykładowe skrypty, każdy z nich wykonuje się bez problemów.
+
 ### 5.1. Testowanie leksera
 
 * Testy jednostkowe sprawdzające wykrycie w prostych sekwencjach:
@@ -245,15 +248,27 @@ T_UNKNOWN:    symbol nieznany
 * Testy jednostkowe sprawdzające rozpoznanie różnych tokenów w bardziej skomplikowanych sekwencjach:
     * jednoliniowych,
     * wieloliniowych.
-* Testy jednostkowe sprawdzające kontrolę błędów, czyli rzucanie błędów i wykrywanie tokenów:
+* Testy jednostkowe sprawdzające kontrolę błędów, czyli wykrywanie błędów leksykalnych i rzucanie odpowiednich wyjątków
+  oraz wykrywanie tokenów:
     * T_UNKNOWN - nierozpoznany symbol,
     * T_ILLEGAL - symbol niedozwolony (przerwanie stałej tekstowej znakiem nowej linii lub ETX, przekroczenie
       maksymalnej długości identyfikatora/komentarza/stałej tekstowej, przekroczenie maksymalnego romiaru liczby itp.).
 
 ### 5.2. Testowanie parsera
 
-Testy jednostkowe sprawdzające parsowanie przykładów wszystkich struktur, włączając w to przypadki rzadkie.
+* Testy jednostkowe sprawdzające parsowanie przykładów wszystkich struktur, włączając w to przypadki rzadkie.
+* Testy jednostkowe sprawdzające kontrolę błędów, czyli wykrywanie błędów gramatycznych i rzucanie odpowiednich
+  wyjątków.
+* Dodatkowo dążąc do pełnego pokrycia kodu testami napisałem testy sprawdzające poprawność generowania odpowiednich
+  obiektów drzewa kodu.
+
+### 5.4. Testowanie interpretera
+
+* Testy jednostkowe próbujące wykonać wiele różnych fragmentów kodu i sprawdzające czy nie został rzucony żaden wyjątek.
+* Testy jednostkowe celowo próbujące wykonać błędny kod i sprawdzające czy odpowiedni wyjątek został rzucony.
+* Testy jednostkowe sprawdzające użycie wbudowanych klas/funkcji języka.
+* Testy sprawdzające czy wykonanie zacznie się od zadanej funkcji.
 
 ### 5.3. Testowanie finalnej aplikacji z GUI
 
-Testy manualne polegające na sprawdzeniu wyniku przygotowanych skryptów.
+Testy manualne, czyli próby wykonania przykładowych skryptów.

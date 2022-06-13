@@ -1,17 +1,16 @@
-import logging
 import unittest
 from io import StringIO
 
 from parameterized import parameterized
 
-from ErrorHandlerModule.ErrorHandler import ErrorHandler
-from ErrorHandlerModule.ErrorType import IdentifierTooLongLexerException, TextConstTooLongLexerException, \
+from Tutel.ErrorHandlerModule.ErrorHandler import ErrorHandler
+from Tutel.ErrorHandlerModule.ErrorType import IdentifierTooLongLexerException, TextConstTooLongLexerException, \
     CommentTooLongLexerException, \
     UnknownTokenLexerException, UnterminatedStringLexerException, MAX_COMMENT_LENGTH, MAX_IDENTIFIER_LENGTH, \
     IntegerTooLargeLexerException, \
     MAX_TEXT_CONST_LENGTH, LeadingZerosInIntegerLexerException, UnknownEscapingLexerException
-from LexerModule.Lexer import Lexer, Token, TokenType, keywords
-from LexerModule.Tokens import operators
+from Tutel.LexerModule.Lexer import Lexer, Token
+from Tutel.LexerModule.Tokens import operators, TokenType, keywords
 
 
 class TestLexerSimple(unittest.TestCase):
@@ -385,3 +384,11 @@ class TestLexerErrorHandling(unittest.TestCase):
         # THEN
         self.assertRaises(UnknownEscapingLexerException, lexer.get_next_token)
         self.assertEqual(expected, lexer.token, "T_ILLEGAL not detected correctly.")
+
+
+def suite():
+    suite = unittest.TestSuite()
+    suite.addTest(unittest.makeSuite(TestLexerSimple, 'test'))
+    suite.addTest(unittest.makeSuite(TestLexerComplexer, 'test'))
+    suite.addTest(unittest.makeSuite(TestLexerErrorHandling, 'test'))
+    return suite
