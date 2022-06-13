@@ -1,7 +1,7 @@
 from typing import TextIO
 
-from ErrorHandlerModule.ErrorHandler import ErrorHandler
-from ErrorHandlerModule.ErrorType import (
+from Tutel.ErrorHandlerModule.ErrorHandler import ErrorHandler
+from Tutel.ErrorHandlerModule.ErrorType import (
     UnknownTokenLexerException,
     CommentTooLongLexerException,
     IdentifierTooLongLexerException,
@@ -15,8 +15,8 @@ from ErrorHandlerModule.ErrorType import (
     MAX_COMMENT_LENGTH,
     MAX_INTEGER,
 )
-from LexerModule.Source import Source
-from LexerModule.Tokens import *
+from Tutel.LexerModule.Source import Source
+from Tutel.LexerModule.Tokens import Token, TokenType, operator_parts, operators, escaped_chars, keywords
 
 
 class Lexer:
@@ -47,7 +47,7 @@ class Lexer:
             return self.token
 
         self.token = Token(TokenType.T_UNKNOWN, self.source.char, self.source.line, self.source.column)
-        self._error_handler.handler_error(UnknownTokenLexerException(self.token))
+        self._error_handler.handle_error(UnknownTokenLexerException(self.token))
 
     def _skip_whites(self) -> None:
         while self.source.char.isspace():
@@ -70,7 +70,7 @@ class Lexer:
             if len(comment) > MAX_COMMENT_LENGTH:
                 comment = comment[:-1]
                 self.token = Token(TokenType.T_ILLEGAL, comment, self.source.line, self.starting_at_column)
-                self._error_handler.handler_error(CommentTooLongLexerException(self.token))
+                self._error_handler.handle_error(CommentTooLongLexerException(self.token))
             self.token = Token(TokenType.T_COMMENT, comment, self.source.line, self.starting_at_column)
             return True
         return False
@@ -86,7 +86,7 @@ class Lexer:
             if len(identifier) > MAX_IDENTIFIER_LENGTH:
                 identifier = identifier[:-1]
                 self.token = Token(TokenType.T_ILLEGAL, identifier, self.source.line, self.starting_at_column)
-                self._error_handler.handler_error(IdentifierTooLongLexerException(self.token))
+                self._error_handler.handle_error(IdentifierTooLongLexerException(self.token))
             if tokenType := keywords.get(identifier):
                 # Keyword
                 self.token = Token(tokenType, identifier, self.source.line, self.starting_at_column)
@@ -105,7 +105,7 @@ class Lexer:
                 if self.source.char in ['\n', '\3']:
                     self.token = Token(TokenType.T_ILLEGAL, "".join(text_const + [self.source.char]), self.source.line,
                                        self.source.column)
-                    self._error_handler.handler_error(UnterminatedStringLexerException(self.token))
+                    self._error_handler.handle_error(UnterminatedStringLexerException(self.token))
                 if self.source.char == "\\":
                     self.source.get_next_char()
                     if escaped := escaped_chars.get(self.source.char):
@@ -113,7 +113,7 @@ class Lexer:
                     else:
                         self.token = Token(TokenType.T_ILLEGAL, "\\" + self.source.char,
                                            self.source.line, self.source.column - 1)
-                        self._error_handler.handler_error(UnknownEscapingLexerException(self.token))
+                        self._error_handler.handle_error(UnknownEscapingLexerException(self.token))
                 else:
                     text_const.append(self.source.char)
                 self.source.get_next_char()
@@ -121,7 +121,7 @@ class Lexer:
             if len(text_const) > MAX_TEXT_CONST_LENGTH:
                 text_const = text_const[:-1]
                 self.token = Token(TokenType.T_ILLEGAL, text_const, self.source.line, self.starting_at_column)
-                self._error_handler.handler_error(TextConstTooLongLexerException(self.token))
+                self._error_handler.handle_error(TextConstTooLongLexerException(self.token))
             self.source.get_next_char()
             self.token = Token(TokenType.T_TEXT_CONST, text_const, self.source.line, self.starting_at_column)
             return True
@@ -134,13 +134,13 @@ class Lexer:
             while self.source.char.isdecimal() and number <= MAX_INTEGER:
                 if number == 0 and int(self.source.char) != 0:
                     self.token = Token(TokenType.T_ILLEGAL, self.source.char, self.source.line, self.source.column)
-                    self._error_handler.handler_error(LeadingZerosInIntegerLexerException(self.token))
+                    self._error_handler.handle_error(LeadingZerosInIntegerLexerException(self.token))
                 number *= 10
                 number += int(self.source.char)
                 self.source.get_next_char()
             if number > MAX_INTEGER:
                 self.token = Token(TokenType.T_ILLEGAL, number, self.source.line, self.starting_at_column)
-                self._error_handler.handler_error(IntegerTooLargeLexerException(self.token))
+                self._error_handler.handle_error(IntegerTooLargeLexerException(self.token))
             self.token = Token(TokenType.T_NUMBER, number, self.source.line, self.starting_at_column)
             return True
         return False

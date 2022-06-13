@@ -1,41 +1,59 @@
-import logging
 import unittest
 from io import StringIO
 
 from parameterized import parameterized
 
-from ErrorHandlerModule.ErrorHandler import ErrorHandler
-from ErrorHandlerModule.ErrorType import MissingLeftBracketException, MissingRightBracketException, \
-    MissingRightCurlyBracketException, MissingRightSquereBracketException, MissingFunctionBlockException, \
+from Tutel.ErrorHandlerModule.ErrorHandler import ErrorHandler
+from Tutel.ErrorHandlerModule.ErrorType import MissingLeftBracketException, MissingRightBracketException, \
+    MissingRightCurlyBracketException, MissingRightSquareBracketException, MissingFunctionBlockException, \
     FunctionRedefinitionException, MissingIdentifierAfterCommaException, MissingExpressionAfterCommaException, \
     MissingSemicolonException, MissingRightSideOfAssignmentException, MissingConditionException, MissingBodyException, \
     MissingIteratorException, MissingIterableException, MissingKeywordInException, ExprMissingRightSideException, \
     MissingIdentifierAfterDotException
-from LexerModule.Lexer import Lexer
-from ParserModule.Parser import Parser
-from ParserModule.Classes import (
+from Tutel.LexerModule.Lexer import Lexer
+from Tutel.ParserModule.Parser import Parser
+from Tutel.ParserModule.Classes import (
     Program, Function, Identifier, BasicAssignment, Integer, AddAssignment, SubAssignment,
     MulAssignment, DivAssignment, ModAssignment, ReturnStatement, AddExpr, SubExpr, IfStatement, GreaterExpr, ElifBlock,
     AndExpr, OrExpr, ElseBlock, FunCall, ForStatement, WhileStatement, MulExpr, EqExpr, NotEqExpr,
     LessExpr, GreaterEqExpr, LessEqExpr, InExpr, DivExpr, ModExpr, IntDivExpr, DotOperator, ListElement, List, String,
-    Boolean, Null, Negate, TwoSidedExpression, Assignment, Atom
+    Boolean, Null, Negate, TwoSidedExpression, Assignment, Atom, Block
 )
 
 
 class TestParser(unittest.TestCase):
     @parameterized.expand([
-        ("foo(){}", Program({"foo": Function(Identifier("foo"), [], [])})),
+        ("#test\nfoo(){}", Program({"foo": Function(Identifier("foo"), [], Block([]))})),
+        ("foo(){a = 1; #test\n}",
+         Program(
+             {"foo": Function(Identifier("foo"), [], Block([BasicAssignment(Identifier("a"), Integer(1))]))})),
+    ])
+    def test_skip_comment(self, case, expect):
+        # GIVEN
+        error_handler = ErrorHandler()
+        lexer = Lexer(StringIO(case), error_handler)
+        parser = Parser(error_handler)
+
+        # WHEN
+        program = parser.parse(lexer)
+
+        # THEN
+        self.assertEqual(expect, program, f"Function not parsed: {case}")
+
+    @parameterized.expand([
+        ("foo(){}", Program({"foo": Function(Identifier("foo"), [], Block([]))})),
         ("foo(){} boo(){}",
-         Program({"foo": Function(Identifier("foo"), [], []), "boo": Function(Identifier("boo"), [], [])})),
+         Program(
+             {"foo": Function(Identifier("foo"), [], Block([])), "boo": Function(Identifier("boo"), [], Block([]))})),
     ])
     def test_try_parse_function_def(self, case, expect):
         # GIVEN
         error_handler = ErrorHandler()
         lexer = Lexer(StringIO(case), error_handler)
-        parser = Parser(lexer, error_handler)
+        parser = Parser(error_handler)
 
         # WHEN
-        program = parser.parse()
+        program = parser.parse(lexer)
 
         # THEN
         self.assertEqual(expect, program, f"Function not parsed: {case}")
@@ -43,240 +61,250 @@ class TestParser(unittest.TestCase):
     @parameterized.expand([
         ("foo(a, b){} boo(a){}",
          Program(
-             {"foo": Function(Identifier("foo"), [Identifier("a"), Identifier("b")], []),
-              "boo": Function(Identifier("boo"), [Identifier("a")], [])
+             {"foo": Function(Identifier("foo"), [Identifier("a"), Identifier("b")], Block([])),
+              "boo": Function(Identifier("boo"), [Identifier("a")], Block([]))
               })),
         ("foo(a, b, c){} boo(){} bar(var){}",
-         Program({"foo": Function(Identifier("foo"), [Identifier("a"), Identifier("b"), Identifier("c")], []),
-                  "boo": Function(Identifier("boo"), [], []),
-                  "bar": Function(Identifier("bar"), [Identifier("var")], [])})),
+         Program({"foo": Function(Identifier("foo"), [Identifier("a"), Identifier("b"), Identifier("c")], Block([])),
+                  "boo": Function(Identifier("boo"), [], Block([])),
+                  "bar": Function(Identifier("bar"), [Identifier("var")], Block([]))})),
     ])
     def test_try_parse_params_list(self, case, expect):
         # GIVEN
         error_handler = ErrorHandler()
         lexer = Lexer(StringIO(case), error_handler)
-        parser = Parser(lexer, error_handler)
+        parser = Parser(error_handler)
 
         # WHEN
-        program = parser.parse()
+        program = parser.parse(lexer)
 
         # THEN
         self.assertEqual(expect, program, f"Function params not parsed: {case}")
 
     @parameterized.expand([
         ("foo(){var = 5;}",
-         Program({"foo": Function(Identifier("foo"), [], [BasicAssignment(Identifier("var"), Integer(5))])})),
+         Program({"foo": Function(Identifier("foo"), [], Block([BasicAssignment(Identifier("var"), Integer(5))]))})),
         ("foo(){var = var1;} boo(){var = var1; var2 = var3;}",
-         Program({"foo": Function(Identifier("foo"), [], [BasicAssignment(Identifier("var"), Identifier("var1"))]),
-                  "boo": Function(Identifier("boo"), [], [
-                      BasicAssignment(Identifier("var"), Identifier("var1")),
-                      BasicAssignment(Identifier("var2"), Identifier("var3"))])})),
+         Program(
+             {"foo": Function(Identifier("foo"), [], Block([BasicAssignment(Identifier("var"), Identifier("var1"))])),
+              "boo": Function(Identifier("boo"), [], Block([
+                  BasicAssignment(Identifier("var"), Identifier("var1")),
+                  BasicAssignment(Identifier("var2"), Identifier("var3"))]))})),
     ])
     def test_try_parse_block(self, case, expect):
         # GIVEN
         error_handler = ErrorHandler()
         lexer = Lexer(StringIO(case), error_handler)
-        parser = Parser(lexer, error_handler)
+        parser = Parser(error_handler)
 
         # WHEN
-        program = parser.parse()
+        program = parser.parse(lexer)
 
         # THEN
         self.assertEqual(expect, program, f"Function block not parsed: {case}")
 
     @parameterized.expand([
         ("foo(){var = 5;}",
-         Program({"foo": Function(Identifier("foo"), [], [BasicAssignment(Identifier("var"), Integer(5))])})),
+         Program({"foo": Function(Identifier("foo"), [], Block([BasicAssignment(Identifier("var"), Integer(5))]))})),
         ("foo(){var += 5;}",
-         Program({"foo": Function(Identifier("foo"), [], [AddAssignment(Identifier("var"), Integer(5))])})),
+         Program({"foo": Function(Identifier("foo"), [], Block([AddAssignment(Identifier("var"), Integer(5))]))})),
         ("foo(){var -= 5;}",
-         Program({"foo": Function(Identifier("foo"), [], [SubAssignment(Identifier("var"), Integer(5))])})),
+         Program({"foo": Function(Identifier("foo"), [], Block([SubAssignment(Identifier("var"), Integer(5))]))})),
         ("foo(){var *= 5;}",
-         Program({"foo": Function(Identifier("foo"), [], [MulAssignment(Identifier("var"), Integer(5))])})),
+         Program({"foo": Function(Identifier("foo"), [], Block([MulAssignment(Identifier("var"), Integer(5))]))})),
         ("foo(){var /= 5;}",
-         Program({"foo": Function(Identifier("foo"), [], [DivAssignment(Identifier("var"), Integer(5))])})),
+         Program({"foo": Function(Identifier("foo"), [], Block([DivAssignment(Identifier("var"), Integer(5))]))})),
         ("foo(){var %= 5;}",
-         Program({"foo": Function(Identifier("foo"), [], [ModAssignment(Identifier("var"), Integer(5))])})),
+         Program({"foo": Function(Identifier("foo"), [], Block([ModAssignment(Identifier("var"), Integer(5))]))})),
     ])
     def test_try_parse_assignment(self, case, expect):
         # GIVEN
         error_handler = ErrorHandler()
         lexer = Lexer(StringIO(case), error_handler)
-        parser = Parser(lexer, error_handler)
+        parser = Parser(error_handler)
 
         # WHEN
-        program = parser.parse()
+        program = parser.parse(lexer)
 
         # THEN
         self.assertEqual(expect, program, f"Assignment not parsed: {case}")
 
     @parameterized.expand([
         ("foo(){return;}",
-         Program({"foo": Function(Identifier("foo"), [], [ReturnStatement([])])})),
+         Program({"foo": Function(Identifier("foo"), [], Block([ReturnStatement([])]))})),
         ("foo(){return a;}",
-         Program({"foo": Function(Identifier("foo"), [], [ReturnStatement([Identifier("a")])])})),
+         Program({"foo": Function(Identifier("foo"), [], Block([ReturnStatement([Identifier("a")])]))})),
         ("foo(){return a, b;}",
-         Program({"foo": Function(Identifier("foo"), [], [ReturnStatement([Identifier("a"), Identifier("b")])])})),
+         Program(
+             {"foo": Function(Identifier("foo"), [], Block([ReturnStatement([Identifier("a"), Identifier("b")])]))})),
         ("foo(){return a, b + c - 2;}",
-         Program({"foo": Function(Identifier("foo"), [], [
-             ReturnStatement([Identifier("a"), SubExpr(AddExpr(Identifier("b"), Identifier("c")), Integer(2))])])})),
+         Program({"foo": Function(Identifier("foo"), [], Block([
+             ReturnStatement([Identifier("a"), SubExpr(AddExpr(Identifier("b"), Identifier("c")), Integer(2))])]))})),
     ])
     def test_try_parse_return_statement(self, case, expect):
         # GIVEN
         error_handler = ErrorHandler()
         lexer = Lexer(StringIO(case), error_handler)
-        parser = Parser(lexer, error_handler)
+        parser = Parser(error_handler)
 
         # WHEN
-        program = parser.parse()
+        program = parser.parse(lexer)
 
         # THEN
         self.assertEqual(expect, program, f"Return statement not parsed: {case}")
 
     @parameterized.expand([
         ("foo(){if(true) a += 1;}",
-         Program({"foo": Function(Identifier("foo"), [], [
-             IfStatement(Boolean(True), [AddAssignment(Identifier("a"), Integer(1))],
-                         [], None)])})),
+         Program({"foo": Function(Identifier("foo"), [], Block([
+             IfStatement(Boolean(True), Block([AddAssignment(Identifier("a"), Integer(1))]),
+                         [], None)]))})),
         ("foo(){if(a > b){a += 1;}}",
-         Program({"foo": Function(Identifier("foo"), [], [
-             IfStatement(GreaterExpr(Identifier("a"), Identifier("b")), [AddAssignment(Identifier("a"), Integer(1))],
-                         [], None)])})),
+         Program({"foo": Function(Identifier("foo"), [], Block([
+             IfStatement(GreaterExpr(Identifier("a"), Identifier("b")),
+                         Block([AddAssignment(Identifier("a"), Integer(1))]),
+                         [], None)]))})),
     ])
     def test_try_parse_if_statement(self, case, expect):
         # GIVEN
         error_handler = ErrorHandler()
         lexer = Lexer(StringIO(case), error_handler)
-        parser = Parser(lexer, error_handler)
+        parser = Parser(error_handler)
 
         # WHEN
-        program = parser.parse()
+        program = parser.parse(lexer)
 
         # THEN
         self.assertEqual(expect, program, f"If statement not parsed: {case}")
 
     @parameterized.expand([
         ("foo(){if(a > b){a += 1;} elif(c and d){e += 1;}}",
-         Program({"foo": Function(Identifier("foo"), [], [
-             IfStatement(GreaterExpr(Identifier("a"), Identifier("b")), [AddAssignment(Identifier("a"), Integer(1))],
+         Program({"foo": Function(Identifier("foo"), [], Block([
+             IfStatement(GreaterExpr(Identifier("a"), Identifier("b")),
+                         Block([AddAssignment(Identifier("a"), Integer(1))]),
                          [ElifBlock(AndExpr(Identifier("c"), Identifier("d")),
-                                    [AddAssignment(Identifier("e"), Integer(1))])], None)])})),
+                                    Block([AddAssignment(Identifier("e"), Integer(1))]))], None)]))})),
         ("foo(){if(a > b){a += 1;} elif(c and d){e += 1;} elif(d or f){e = 1;}}",
-         Program({"foo": Function(Identifier("foo"), [], [
-             IfStatement(GreaterExpr(Identifier("a"), Identifier("b")), [AddAssignment(Identifier("a"), Integer(1))],
+         Program({"foo": Function(Identifier("foo"), [], Block([
+             IfStatement(GreaterExpr(Identifier("a"), Identifier("b")),
+                         Block([AddAssignment(Identifier("a"), Integer(1))]),
                          [ElifBlock(AndExpr(Identifier("c"), Identifier("d")),
-                                    [AddAssignment(Identifier("e"), Integer(1))]),
+                                    Block([AddAssignment(Identifier("e"), Integer(1))])),
                           ElifBlock(OrExpr(Identifier("d"), Identifier("f")),
-                                    [BasicAssignment(Identifier("e"), Integer(1))])], None)])})),
+                                    Block([BasicAssignment(Identifier("e"), Integer(1))]))], None)]))})),
         ("foo(){if(a > b){a += 1;} elif(c and d){e += 1;} elif(d or f){e = 1;} else{print(a);}}",
-         Program({"foo": Function(Identifier("foo"), [], [
-             IfStatement(GreaterExpr(Identifier("a"), Identifier("b")), [AddAssignment(Identifier("a"), Integer(1))],
+         Program({"foo": Function(Identifier("foo"), [], Block([
+             IfStatement(GreaterExpr(Identifier("a"), Identifier("b")),
+                         Block([AddAssignment(Identifier("a"), Integer(1))]),
                          [ElifBlock(AndExpr(Identifier("c"), Identifier("d")),
-                                    [AddAssignment(Identifier("e"), Integer(1))]),
+                                    Block([AddAssignment(Identifier("e"), Integer(1))])),
                           ElifBlock(OrExpr(Identifier("d"), Identifier("f")),
-                                    [BasicAssignment(Identifier("e"), Integer(1))])],
-                         ElseBlock([FunCall(Identifier("print"), [Identifier("a")])]))])})),
+                                    Block([BasicAssignment(Identifier("e"), Integer(1))]))],
+                         ElseBlock([FunCall(Identifier("print"), [Identifier("a")])]))]))})),
     ])
     def test_try_parse_elif_block(self, case, expect):
         # GIVEN
         error_handler = ErrorHandler()
         lexer = Lexer(StringIO(case), error_handler)
-        parser = Parser(lexer, error_handler)
+        parser = Parser(error_handler)
 
         # WHEN
-        program = parser.parse()
+        program = parser.parse(lexer)
 
         # THEN
         self.assertEqual(expect, program, f"Elif statement not parsed: {case}")
 
     @parameterized.expand([
         ("foo(){if(a > b){a += 1;} else{print(a);}}",
-         Program({"foo": Function(Identifier("foo"), [], [
-             IfStatement(GreaterExpr(Identifier("a"), Identifier("b")), [AddAssignment(Identifier("a"), Integer(1))],
+         Program({"foo": Function(Identifier("foo"), [], Block([
+             IfStatement(GreaterExpr(Identifier("a"), Identifier("b")),
+                         Block([AddAssignment(Identifier("a"), Integer(1))]),
                          [],
-                         ElseBlock([FunCall(Identifier("print"), [Identifier("a")])]))])})),
+                         ElseBlock([FunCall(Identifier("print"), [Identifier("a")])]))]))})),
         ("foo(){if(a > b){a += 1;} elif(c and d){e += 1;} elif(d or f){e = 1;} else{print(a);}}",
-         Program({"foo": Function(Identifier("foo"), [], [
-             IfStatement(GreaterExpr(Identifier("a"), Identifier("b")), [AddAssignment(Identifier("a"), Integer(1))],
+         Program({"foo": Function(Identifier("foo"), [], Block([
+             IfStatement(GreaterExpr(Identifier("a"), Identifier("b")),
+                         Block([AddAssignment(Identifier("a"), Integer(1))]),
                          [ElifBlock(AndExpr(Identifier("c"), Identifier("d")),
-                                    [AddAssignment(Identifier("e"), Integer(1))]),
+                                    Block([AddAssignment(Identifier("e"), Integer(1))])),
                           ElifBlock(OrExpr(Identifier("d"), Identifier("f")),
-                                    [BasicAssignment(Identifier("e"), Integer(1))])],
-                         ElseBlock([FunCall(Identifier("print"), [Identifier("a")])]))])})),
+                                    Block([BasicAssignment(Identifier("e"), Integer(1))]))],
+                         ElseBlock([FunCall(Identifier("print"), [Identifier("a")])]))]))})),
     ])
     def test_try_parse_else_block(self, case, expect):
         # GIVEN
         error_handler = ErrorHandler()
         lexer = Lexer(StringIO(case), error_handler)
-        parser = Parser(lexer, error_handler)
+        parser = Parser(error_handler)
 
         # WHEN
-        program = parser.parse()
+        program = parser.parse(lexer)
 
         # THEN
         self.assertEqual(expect, program, f"Else statement not parsed: {case}")
 
     @parameterized.expand([
         ("foo(){for(a in b)print(a);}",
-         Program({"foo": Function(Identifier("foo"), [], [
-             ForStatement(Identifier("a"), Identifier("b"), [FunCall(Identifier("print"), [Identifier("a")])])])})),
+         Program({"foo": Function(Identifier("foo"), [], Block([
+             ForStatement(Identifier("a"), Identifier("b"),
+                          Block([FunCall(Identifier("print"), [Identifier("a")])]))]))})),
         ("foo(){for(a in b){print(a);}}",
-         Program({"foo": Function(Identifier("foo"), [], [
-             ForStatement(Identifier("a"), Identifier("b"), [FunCall(Identifier("print"), [Identifier("a")])])])})),
+         Program({"foo": Function(Identifier("foo"), [], Block([
+             ForStatement(Identifier("a"), Identifier("b"),
+                          Block([FunCall(Identifier("print"), [Identifier("a")])]))]))})),
     ])
     def test_try_parse_for_statement(self, case, expect):
         # GIVEN
         error_handler = ErrorHandler()
         lexer = Lexer(StringIO(case), error_handler)
-        parser = Parser(lexer, error_handler)
+        parser = Parser(error_handler)
 
         # WHEN
-        program = parser.parse()
+        program = parser.parse(lexer)
 
         # THEN
         self.assertEqual(expect, program, f"For statement not parsed: {case}")
 
     @parameterized.expand([
         ("foo(){while(a and b)print(a);}",
-         Program({"foo": Function(Identifier("foo"), [], [
+         Program({"foo": Function(Identifier("foo"), [], Block([
              WhileStatement(AndExpr(Identifier("a"), Identifier("b")),
-                            [FunCall(Identifier("print"), [Identifier("a")])])])})),
+                            Block([FunCall(Identifier("print"), [Identifier("a")])]))]))})),
         ("foo(){while(true){print(a);}}",
-         Program({"foo": Function(Identifier("foo"), [], [
+         Program({"foo": Function(Identifier("foo"), [], Block([
              WhileStatement(Boolean(True),
-                            [FunCall(Identifier("print"), [Identifier("a")])])])})),
+                            Block([FunCall(Identifier("print"), [Identifier("a")])]))]))})),
     ])
     def test_try_parse_while_statement(self, case, expect):
         # GIVEN
         error_handler = ErrorHandler()
         lexer = Lexer(StringIO(case), error_handler)
-        parser = Parser(lexer, error_handler)
+        parser = Parser(error_handler)
 
         # WHEN
-        program = parser.parse()
+        program = parser.parse(lexer)
 
         # THEN
         self.assertEqual(expect, program, f"While statement not parsed: {case}")
 
     @parameterized.expand([
         ("foo(){a = -a and b or c - 2 * 3 and (b or not g);}",
-         Program({"foo": Function(Identifier("foo"), [], [
+         Program({"foo": Function(Identifier("foo"), [], Block([
              BasicAssignment(
                  Identifier("a"),
                  OrExpr(AndExpr(Negate(Identifier("a")), Identifier("b")),
                         AndExpr(
                             SubExpr(Identifier("c"),
                                     MulExpr(Integer(2), Integer(3))),
-                            OrExpr(Identifier("b"), Negate(Identifier("g"))))))])})),
+                            OrExpr(Identifier("b"), Negate(Identifier("g"))))))]))})),
     ])
     def test_try_parse_expression(self, case, expect):
         # GIVEN
         error_handler = ErrorHandler()
         lexer = Lexer(StringIO(case), error_handler)
-        parser = Parser(lexer, error_handler)
+        parser = Parser(error_handler)
 
         # WHEN
-        program = parser.parse()
+        program = parser.parse(lexer)
 
         # THEN
         self.assertEqual(expect, program, f"Expression not parsed: {case}")
@@ -284,16 +312,17 @@ class TestParser(unittest.TestCase):
     @parameterized.expand([
         ("foo(){a = c or b;}",
          Program({"foo": Function(Identifier("foo"), [],
-                                  [BasicAssignment(Identifier("a"), OrExpr(Identifier("c"), Identifier("b")))])})),
+                                  Block(
+                                      [BasicAssignment(Identifier("a"), OrExpr(Identifier("c"), Identifier("b")))]))})),
     ])
     def test_try_parse_or_expr(self, case, expect):
         # GIVEN
         error_handler = ErrorHandler()
         lexer = Lexer(StringIO(case), error_handler)
-        parser = Parser(lexer, error_handler)
+        parser = Parser(error_handler)
 
         # WHEN
-        program = parser.parse()
+        program = parser.parse(lexer)
 
         # THEN
         self.assertEqual(expect, program, f"Or expression not parsed: {case}")
@@ -301,16 +330,17 @@ class TestParser(unittest.TestCase):
     @parameterized.expand([
         ("foo(){a = c and b;}",
          Program({"foo": Function(Identifier("foo"), [],
-                                  [BasicAssignment(Identifier("a"), AndExpr(Identifier("c"), Identifier("b")))])})),
+                                  Block([BasicAssignment(Identifier("a"),
+                                                         AndExpr(Identifier("c"), Identifier("b")))]))})),
     ])
     def test_try_parse_and_expr(self, case, expect):
         # GIVEN
         error_handler = ErrorHandler()
         lexer = Lexer(StringIO(case), error_handler)
-        parser = Parser(lexer, error_handler)
+        parser = Parser(error_handler)
 
         # WHEN
-        program = parser.parse()
+        program = parser.parse(lexer)
 
         # THEN
         self.assertEqual(expect, program, f"And expression not parsed: {case}")
@@ -318,220 +348,220 @@ class TestParser(unittest.TestCase):
     @parameterized.expand([
         ("foo(){a = not b;}",
          Program({"foo": Function(Identifier("foo"), [],
-                                  [BasicAssignment(Identifier("a"), Negate(Identifier("b")))])})),
+                                  Block([BasicAssignment(Identifier("a"), Negate(Identifier("b")))]))})),
     ])
     def test_try_parse_negate_expr(self, case, expect):
         # GIVEN
         error_handler = ErrorHandler()
         lexer = Lexer(StringIO(case), error_handler)
-        parser = Parser(lexer, error_handler)
+        parser = Parser(error_handler)
 
         # WHEN
-        program = parser.parse()
+        program = parser.parse(lexer)
 
         # THEN
         self.assertEqual(expect, program, f"Negate expression not parsed: {case}")
 
     @parameterized.expand([
-        ("foo(){a = b == c;}", Program({"foo": Function(Identifier("foo"), [], [
-            BasicAssignment(Identifier("a"), EqExpr(Identifier("b"), Identifier("c")))])})),
-        ("foo(){a = b != c;}", Program({"foo": Function(Identifier("foo"), [], [
-            BasicAssignment(Identifier("a"), NotEqExpr(Identifier("b"), Identifier("c")))])})),
-        ("foo(){a = b > c;}", Program({"foo": Function(Identifier("foo"), [], [
-            BasicAssignment(Identifier("a"), GreaterExpr(Identifier("b"), Identifier("c")))])})),
-        ("foo(){a = b < c;}", Program({"foo": Function(Identifier("foo"), [], [
-            BasicAssignment(Identifier("a"), LessExpr(Identifier("b"), Identifier("c")))])})),
-        ("foo(){a = b >= c;}", Program({"foo": Function(Identifier("foo"), [], [
-            BasicAssignment(Identifier("a"), GreaterEqExpr(Identifier("b"), Identifier("c")))])})),
-        ("foo(){a = b <= c;}", Program({"foo": Function(Identifier("foo"), [], [
-            BasicAssignment(Identifier("a"), LessEqExpr(Identifier("b"), Identifier("c")))])})),
-        ("foo(){a = b in c;}", Program({"foo": Function(Identifier("foo"), [], [
-            BasicAssignment(Identifier("a"), InExpr(Identifier("b"), Identifier("c")))])})),
+        ("foo(){a = b == c;}", Program({"foo": Function(Identifier("foo"), [], Block([
+            BasicAssignment(Identifier("a"), EqExpr(Identifier("b"), Identifier("c")))]))})),
+        ("foo(){a = b != c;}", Program({"foo": Function(Identifier("foo"), [], Block([
+            BasicAssignment(Identifier("a"), NotEqExpr(Identifier("b"), Identifier("c")))]))})),
+        ("foo(){a = b > c;}", Program({"foo": Function(Identifier("foo"), [], Block([
+            BasicAssignment(Identifier("a"), GreaterExpr(Identifier("b"), Identifier("c")))]))})),
+        ("foo(){a = b < c;}", Program({"foo": Function(Identifier("foo"), [], Block([
+            BasicAssignment(Identifier("a"), LessExpr(Identifier("b"), Identifier("c")))]))})),
+        ("foo(){a = b >= c;}", Program({"foo": Function(Identifier("foo"), [], Block([
+            BasicAssignment(Identifier("a"), GreaterEqExpr(Identifier("b"), Identifier("c")))]))})),
+        ("foo(){a = b <= c;}", Program({"foo": Function(Identifier("foo"), [], Block([
+            BasicAssignment(Identifier("a"), LessEqExpr(Identifier("b"), Identifier("c")))]))})),
+        ("foo(){a = b in c;}", Program({"foo": Function(Identifier("foo"), [], Block([
+            BasicAssignment(Identifier("a"), InExpr(Identifier("b"), Identifier("c")))]))})),
     ])
     def test_try_parse_comp_expr(self, case, expect):
         # GIVEN
         error_handler = ErrorHandler()
         lexer = Lexer(StringIO(case), error_handler)
-        parser = Parser(lexer, error_handler)
+        parser = Parser(error_handler)
 
         # WHEN
-        program = parser.parse()
+        program = parser.parse(lexer)
 
         # THEN
         self.assertEqual(expect, program, f"Comp expression not parsed: {case}")
 
     @parameterized.expand([
-        ("foo(){a = b + c;}", Program({"foo": Function(Identifier("foo"), [], [
-            BasicAssignment(Identifier("a"), AddExpr(Identifier("b"), Identifier("c")))])})),
-        ("foo(){a = b - c;}", Program({"foo": Function(Identifier("foo"), [], [
-            BasicAssignment(Identifier("a"), SubExpr(Identifier("b"), Identifier("c")))])})),
-        ("foo(){a = b + c - d;}", Program({"foo": Function(Identifier("foo"), [], [
-            BasicAssignment(Identifier("a"), SubExpr(AddExpr(Identifier("b"), Identifier("c")), Identifier("d")))])})),
+        ("foo(){a = b + c;}", Program({"foo": Function(Identifier("foo"), [], Block([
+            BasicAssignment(Identifier("a"), AddExpr(Identifier("b"), Identifier("c")))]))})),
+        ("foo(){a = b - c;}", Program({"foo": Function(Identifier("foo"), [], Block([
+            BasicAssignment(Identifier("a"), SubExpr(Identifier("b"), Identifier("c")))]))})),
+        ("foo(){a = b + c - d;}", Program({"foo": Function(Identifier("foo"), [], Block([
+            BasicAssignment(Identifier("a"), SubExpr(AddExpr(Identifier("b"), Identifier("c")), Identifier("d")))]))})),
     ])
     def test_try_parse_sum_expr(self, case, expect):
         # GIVEN
         error_handler = ErrorHandler()
         lexer = Lexer(StringIO(case), error_handler)
-        parser = Parser(lexer, error_handler)
+        parser = Parser(error_handler)
 
         # WHEN
-        program = parser.parse()
+        program = parser.parse(lexer)
 
         # THEN
         self.assertEqual(expect, program, f"Sum expression not parsed: {case}")
 
     @parameterized.expand([
-        ("foo(){a = b * c;}", Program({"foo": Function(Identifier("foo"), [], [
-            BasicAssignment(Identifier("a"), MulExpr(Identifier("b"), Identifier("c")))])})),
-        ("foo(){a = b / c;}", Program({"foo": Function(Identifier("foo"), [], [
-            BasicAssignment(Identifier("a"), DivExpr(Identifier("b"), Identifier("c")))])})),
-        ("foo(){a = b % c;}", Program({"foo": Function(Identifier("foo"), [], [
-            BasicAssignment(Identifier("a"), ModExpr(Identifier("b"), Identifier("c")))])})),
-        ("foo(){a = b // c;}", Program({"foo": Function(Identifier("foo"), [], [
-            BasicAssignment(Identifier("a"), IntDivExpr(Identifier("b"), Identifier("c")))])})),
+        ("foo(){a = b * c;}", Program({"foo": Function(Identifier("foo"), [], Block([
+            BasicAssignment(Identifier("a"), MulExpr(Identifier("b"), Identifier("c")))]))})),
+        ("foo(){a = b / c;}", Program({"foo": Function(Identifier("foo"), [], Block([
+            BasicAssignment(Identifier("a"), DivExpr(Identifier("b"), Identifier("c")))]))})),
+        ("foo(){a = b % c;}", Program({"foo": Function(Identifier("foo"), [], Block([
+            BasicAssignment(Identifier("a"), ModExpr(Identifier("b"), Identifier("c")))]))})),
+        ("foo(){a = b // c;}", Program({"foo": Function(Identifier("foo"), [], Block([
+            BasicAssignment(Identifier("a"), IntDivExpr(Identifier("b"), Identifier("c")))]))})),
     ])
     def test_try_parse_mul_expr(self, case, expect):
         # GIVEN
         error_handler = ErrorHandler()
         lexer = Lexer(StringIO(case), error_handler)
-        parser = Parser(lexer, error_handler)
+        parser = Parser(error_handler)
 
         # WHEN
-        program = parser.parse()
+        program = parser.parse(lexer)
 
         # THEN
         self.assertEqual(expect, program, f"Mul expression not parsed: {case}")
 
     @parameterized.expand([
-        ("foo(){a = b.c;}", Program({"foo": Function(Identifier("foo"), [], [
-            BasicAssignment(Identifier("a"), DotOperator(Identifier("b"), Identifier("c")))])})),
+        ("foo(){a = b.c;}", Program({"foo": Function(Identifier("foo"), [], Block([
+            BasicAssignment(Identifier("a"), DotOperator(Identifier("b"), Identifier("c")))]))})),
     ])
     def test_try_parse_dot_operator(self, case, expect):
         # GIVEN
         error_handler = ErrorHandler()
         lexer = Lexer(StringIO(case), error_handler)
-        parser = Parser(lexer, error_handler)
+        parser = Parser(error_handler)
 
         # WHEN
-        program = parser.parse()
+        program = parser.parse(lexer)
 
         # THEN
         self.assertEqual(expect, program, f"Dot operator not parsed: {case}")
 
     @parameterized.expand([
-        ("foo(){a = b();}", Program({"foo": Function(Identifier("foo"), [], [
-            BasicAssignment(Identifier("a"), FunCall(Identifier("b"), []))])})),
+        ("foo(){a = b();}", Program({"foo": Function(Identifier("foo"), [], Block([
+            BasicAssignment(Identifier("a"), FunCall(Identifier("b"), []))]))})),
     ])
     def test_try_parse_fun_call(self, case, expect):
         # GIVEN
         error_handler = ErrorHandler()
         lexer = Lexer(StringIO(case), error_handler)
-        parser = Parser(lexer, error_handler)
+        parser = Parser(error_handler)
 
         # WHEN
-        program = parser.parse()
+        program = parser.parse(lexer)
 
         # THEN
         self.assertEqual(expect, program, f"Function call not parsed: {case}")
 
     @parameterized.expand([
-        ("foo(){a = b(a, b, 5);}", Program({"foo": Function(Identifier("foo"), [], [
+        ("foo(){a = b(a, b, 5);}", Program({"foo": Function(Identifier("foo"), [], Block([
             BasicAssignment(Identifier("a"), FunCall(Identifier("b"), [Identifier("a"), Identifier("b"), Integer(5)]))
-        ])})),
+        ]))})),
     ])
     def test_try_parse_arguments(self, case, expect):
         # GIVEN
         error_handler = ErrorHandler()
         lexer = Lexer(StringIO(case), error_handler)
-        parser = Parser(lexer, error_handler)
+        parser = Parser(error_handler)
 
         # WHEN
-        program = parser.parse()
+        program = parser.parse(lexer)
 
         # THEN
         self.assertEqual(expect, program, f"Function arguments not parsed: {case}")
 
     @parameterized.expand([
-        ("foo(){a = b[1];}", Program({"foo": Function(Identifier("foo"), [], [
-            BasicAssignment(Identifier("a"), ListElement(Identifier("b"), Integer(1)))])})),
+        ("foo(){a = b[1];}", Program({"foo": Function(Identifier("foo"), [], Block([
+            BasicAssignment(Identifier("a"), ListElement(Identifier("b"), Integer(1)))]))})),
     ])
     def test_try_parse_list_element(self, case, expect):
         # GIVEN
         error_handler = ErrorHandler()
         lexer = Lexer(StringIO(case), error_handler)
-        parser = Parser(lexer, error_handler)
+        parser = Parser(error_handler)
 
         # WHEN
-        program = parser.parse()
+        program = parser.parse(lexer)
 
         # THEN
         self.assertEqual(expect, program, f"List element not parsed: {case}")
 
     @parameterized.expand([
         ("foo(){a = (a - 5) * 2;}",
-         Program({"foo": Function(Identifier("foo"), [], [
-             BasicAssignment(Identifier("a"), MulExpr(SubExpr(Identifier("a"), Integer(5)), Integer(2)))])})),
+         Program({"foo": Function(Identifier("foo"), [], Block([
+             BasicAssignment(Identifier("a"), MulExpr(SubExpr(Identifier("a"), Integer(5)), Integer(2)))]))})),
     ])
     def test_try_parse_parenthesis(self, case, expect):
         # GIVEN
         error_handler = ErrorHandler()
         lexer = Lexer(StringIO(case), error_handler)
-        parser = Parser(lexer, error_handler)
+        parser = Parser(error_handler)
 
         # WHEN
-        program = parser.parse()
+        program = parser.parse(lexer)
 
         # THEN
         self.assertEqual(expect, program, f"Parenthesis not parsed: {case}")
 
     @parameterized.expand([
         ("foo(){a = [1, 2, 3];}",
-         Program({"foo": Function(Identifier("foo"), [], [
-             BasicAssignment(Identifier("a"), List([Integer(1), Integer(2), Integer(3)]))])})),
+         Program({"foo": Function(Identifier("foo"), [], Block([
+             BasicAssignment(Identifier("a"), List([Integer(1), Integer(2), Integer(3)]))]))})),
         ("foo(){a = [];}",
-         Program({"foo": Function(Identifier("foo"), [], [
-             BasicAssignment(Identifier("a"), List([]))])})),
+         Program({"foo": Function(Identifier("foo"), [], Block([
+             BasicAssignment(Identifier("a"), List([]))]))})),
     ])
     def test_try_parse_list(self, case, expect):
         # GIVEN
         error_handler = ErrorHandler()
         lexer = Lexer(StringIO(case), error_handler)
-        parser = Parser(lexer, error_handler)
+        parser = Parser(error_handler)
 
         # WHEN
-        program = parser.parse()
+        program = parser.parse(lexer)
 
         # THEN
         self.assertEqual(expect, program, f"List not parsed: {case}")
 
     @parameterized.expand([
         ("foo(){a = \"test\";}",
-         Program({"foo": Function(Identifier("foo"), [], [
-             BasicAssignment(Identifier("a"), String("test"))])})),
+         Program({"foo": Function(Identifier("foo"), [], Block([
+             BasicAssignment(Identifier("a"), String("test"))]))})),
         ("foo(){a = 'test';}",
-         Program({"foo": Function(Identifier("foo"), [], [
-             BasicAssignment(Identifier("a"), String("test"))])})),
+         Program({"foo": Function(Identifier("foo"), [], Block([
+             BasicAssignment(Identifier("a"), String("test"))]))})),
         ("foo(){a = 25;}",
-         Program({"foo": Function(Identifier("foo"), [], [
-             BasicAssignment(Identifier("a"), Integer(25))])})),
+         Program({"foo": Function(Identifier("foo"), [], Block([
+             BasicAssignment(Identifier("a"), Integer(25))]))})),
         ("foo(){a = true;}",
-         Program({"foo": Function(Identifier("foo"), [], [
-             BasicAssignment(Identifier("a"), Boolean(True))])})),
+         Program({"foo": Function(Identifier("foo"), [], Block([
+             BasicAssignment(Identifier("a"), Boolean(True))]))})),
         ("foo(){a = false;}",
-         Program({"foo": Function(Identifier("foo"), [], [
-             BasicAssignment(Identifier("a"), Boolean(False))])})),
+         Program({"foo": Function(Identifier("foo"), [], Block([
+             BasicAssignment(Identifier("a"), Boolean(False))]))})),
         ("foo(){a = null;}",
-         Program({"foo": Function(Identifier("foo"), [], [
-             BasicAssignment(Identifier("a"), Null())])})),
+         Program({"foo": Function(Identifier("foo"), [], Block([
+             BasicAssignment(Identifier("a"), Null())]))})),
     ])
     def test_try_parse_atom(self, case, expect):
         # GIVEN
         error_handler = ErrorHandler()
         lexer = Lexer(StringIO(case), error_handler)
-        parser = Parser(lexer, error_handler)
+        parser = Parser(error_handler)
 
         # WHEN
-        program = parser.parse()
+        program = parser.parse(lexer)
 
         # THEN
         self.assertEqual(expect, program, f"Atom not parsed: {case}")
@@ -566,23 +596,23 @@ class TestParserErrorHandling(unittest.TestCase):
         ("foo(){",
          MissingRightCurlyBracketException),
         ("foo(){[}",
-         MissingRightSquereBracketException),
+         MissingRightSquareBracketException),
         ("foo(){[a}",
-         MissingRightSquereBracketException),
+         MissingRightSquareBracketException),
         ("foo(){a[}",
-         MissingRightSquereBracketException),
+         MissingRightSquareBracketException),
         ("foo(){a[1}",
-         MissingRightSquereBracketException),
+         MissingRightSquareBracketException),
     ])
     def test_detect_missing_brackets(self, case, expect):
         # GIVEN
         # error_handler = ErrorHandler(logging.CRITICAL)
         error_handler = ErrorHandler()
         lexer = Lexer(StringIO(case), error_handler)
-        parser = Parser(lexer, error_handler)
+        parser = Parser(error_handler)
 
         # THEN
-        self.assertRaises(expect, parser.parse)
+        self.assertRaises(expect, parser.parse, lexer)
 
     @parameterized.expand([
         ("foo()",
@@ -595,10 +625,10 @@ class TestParserErrorHandling(unittest.TestCase):
         # error_handler = ErrorHandler(logging.CRITICAL)
         error_handler = ErrorHandler()
         lexer = Lexer(StringIO(case), error_handler)
-        parser = Parser(lexer, error_handler)
+        parser = Parser(error_handler)
 
         # THEN
-        self.assertRaises(expect, parser.parse)
+        self.assertRaises(expect, parser.parse, lexer)
 
     @parameterized.expand([
         ("foo(){}foo(){}",
@@ -611,10 +641,10 @@ class TestParserErrorHandling(unittest.TestCase):
         # error_handler = ErrorHandler(logging.CRITICAL)
         error_handler = ErrorHandler()
         lexer = Lexer(StringIO(case), error_handler)
-        parser = Parser(lexer, error_handler)
+        parser = Parser(error_handler)
 
         # THEN
-        self.assertRaises(expect, parser.parse)
+        self.assertRaises(expect, parser.parse, lexer)
 
     @parameterized.expand([
         ("foo(a,)",
@@ -629,10 +659,10 @@ class TestParserErrorHandling(unittest.TestCase):
         # error_handler = ErrorHandler(logging.CRITICAL)
         error_handler = ErrorHandler()
         lexer = Lexer(StringIO(case), error_handler)
-        parser = Parser(lexer, error_handler)
+        parser = Parser(error_handler)
 
         # THEN
-        self.assertRaises(expect, parser.parse)
+        self.assertRaises(expect, parser.parse, lexer)
 
     @parameterized.expand([
         ("foo(){return a,;}",
@@ -647,10 +677,10 @@ class TestParserErrorHandling(unittest.TestCase):
         # error_handler = ErrorHandler(logging.CRITICAL)
         error_handler = ErrorHandler()
         lexer = Lexer(StringIO(case), error_handler)
-        parser = Parser(lexer, error_handler)
+        parser = Parser(error_handler)
 
         # THEN
-        self.assertRaises(expect, parser.parse)
+        self.assertRaises(expect, parser.parse, lexer)
 
     @parameterized.expand([
         ("foo(){print()}",
@@ -665,10 +695,10 @@ class TestParserErrorHandling(unittest.TestCase):
         # error_handler = ErrorHandler(logging.CRITICAL)
         error_handler = ErrorHandler()
         lexer = Lexer(StringIO(case), error_handler)
-        parser = Parser(lexer, error_handler)
+        parser = Parser(error_handler)
 
         # THEN
-        self.assertRaises(expect, parser.parse)
+        self.assertRaises(expect, parser.parse, lexer)
 
     @parameterized.expand([
         ("foo(){a = }",
@@ -679,10 +709,10 @@ class TestParserErrorHandling(unittest.TestCase):
         # error_handler = ErrorHandler(logging.CRITICAL)
         error_handler = ErrorHandler()
         lexer = Lexer(StringIO(case), error_handler)
-        parser = Parser(lexer, error_handler)
+        parser = Parser(error_handler)
 
         # THEN
-        self.assertRaises(expect, parser.parse)
+        self.assertRaises(expect, parser.parse, lexer)
 
     @parameterized.expand([
         ("foo(){if(){}}",
@@ -697,10 +727,10 @@ class TestParserErrorHandling(unittest.TestCase):
         # error_handler = ErrorHandler(logging.CRITICAL)
         error_handler = ErrorHandler()
         lexer = Lexer(StringIO(case), error_handler)
-        parser = Parser(lexer, error_handler)
+        parser = Parser(error_handler)
 
         # THEN
-        self.assertRaises(expect, parser.parse)
+        self.assertRaises(expect, parser.parse, lexer)
 
     @parameterized.expand([
         ("foo(){if(true)}",
@@ -719,10 +749,10 @@ class TestParserErrorHandling(unittest.TestCase):
         # error_handler = ErrorHandler(logging.CRITICAL)
         error_handler = ErrorHandler()
         lexer = Lexer(StringIO(case), error_handler)
-        parser = Parser(lexer, error_handler)
+        parser = Parser(error_handler)
 
         # THEN
-        self.assertRaises(expect, parser.parse)
+        self.assertRaises(expect, parser.parse, lexer)
 
     @parameterized.expand([
         ("foo(){for()}",
@@ -733,10 +763,10 @@ class TestParserErrorHandling(unittest.TestCase):
         # error_handler = ErrorHandler(logging.CRITICAL)
         error_handler = ErrorHandler()
         lexer = Lexer(StringIO(case), error_handler)
-        parser = Parser(lexer, error_handler)
+        parser = Parser(error_handler)
 
         # THEN
-        self.assertRaises(expect, parser.parse)
+        self.assertRaises(expect, parser.parse, lexer)
 
     @parameterized.expand([
         ("foo(){for(a)}",
@@ -747,10 +777,10 @@ class TestParserErrorHandling(unittest.TestCase):
         # error_handler = ErrorHandler(logging.CRITICAL)
         error_handler = ErrorHandler()
         lexer = Lexer(StringIO(case), error_handler)
-        parser = Parser(lexer, error_handler)
+        parser = Parser(error_handler)
 
         # THEN
-        self.assertRaises(expect, parser.parse)
+        self.assertRaises(expect, parser.parse, lexer)
 
     @parameterized.expand([
         ("foo(){for(a in)}",
@@ -761,10 +791,10 @@ class TestParserErrorHandling(unittest.TestCase):
         # error_handler = ErrorHandler(logging.CRITICAL)
         error_handler = ErrorHandler()
         lexer = Lexer(StringIO(case), error_handler)
-        parser = Parser(lexer, error_handler)
+        parser = Parser(error_handler)
 
         # THEN
-        self.assertRaises(expect, parser.parse)
+        self.assertRaises(expect, parser.parse, lexer)
 
     @parameterized.expand([
         ("foo(){a or}",
@@ -811,10 +841,10 @@ class TestParserErrorHandling(unittest.TestCase):
         # error_handler = ErrorHandler(logging.CRITICAL)
         error_handler = ErrorHandler()
         lexer = Lexer(StringIO(case), error_handler)
-        parser = Parser(lexer, error_handler)
+        parser = Parser(error_handler)
 
         # THEN
-        self.assertRaises(expect, parser.parse)
+        self.assertRaises(expect, parser.parse, lexer)
 
     @parameterized.expand([
         ("foo(){a.}",
@@ -825,10 +855,10 @@ class TestParserErrorHandling(unittest.TestCase):
         # error_handler = ErrorHandler(logging.CRITICAL)
         error_handler = ErrorHandler()
         lexer = Lexer(StringIO(case), error_handler)
-        parser = Parser(lexer, error_handler)
+        parser = Parser(error_handler)
 
         # THEN
-        self.assertRaises(expect, parser.parse)
+        self.assertRaises(expect, parser.parse, lexer)
 
 
 class TestParserClasses(unittest.TestCase):
@@ -839,15 +869,17 @@ class TestParserClasses(unittest.TestCase):
         (Atom(String("a")),),
         (FunCall(Identifier("print"), List([Integer(2)])),),
         (TwoSidedExpression(Identifier("a"), Integer(2)),),
-        (WhileStatement(Boolean(True), [FunCall(Identifier("print"), List([Integer(2)]))]),),
-        (ForStatement(Identifier("a"), Identifier("a"), [FunCall(Identifier("print"), List([Integer(2)]))]),),
-        (IfStatement(Boolean(True), [FunCall(Identifier("print"), List([Integer(2)]))],
-                     [ElifBlock(Boolean(True), [FunCall(Identifier("print"), List([Integer(2)]))])],
+        (Block([FunCall(Identifier("print"), List([Integer(2)]))]),),
+        (WhileStatement(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))])),),
+        (ForStatement(Identifier("a"), Identifier("a"), Block([FunCall(Identifier("print"), List([Integer(2)]))])),),
+        (IfStatement(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))]),
+                     [ElifBlock(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))]))],
                      ElseBlock([FunCall(Identifier("print"), List([Integer(2)]))])),),
         (ReturnStatement([Identifier("a")]),),
         (Assignment(Identifier("a"), Integer(2)),),
-        (Function(Identifier("a"), [Identifier("b")], [Assignment(Identifier("a"), Integer(2))]),),
-        (Program({"a": Function(Identifier("a"), [Identifier("b")], [Assignment(Identifier("a"), Integer(2))])}),),
+        (Function(Identifier("a"), [Identifier("b")], Block([Assignment(Identifier("a"), Integer(2))])),),
+        (Program(
+            {"a": Function(Identifier("a"), [Identifier("b")], Block([Assignment(Identifier("a"), Integer(2))]))}),),
     ])
     def test_check_classes_repr(self, case):
         # GIVEN
@@ -863,15 +895,16 @@ class TestParserClasses(unittest.TestCase):
     @parameterized.expand([
         (Atom(String("a")),),
         (TwoSidedExpression(Identifier("a"), Integer(2)),),
-        (WhileStatement(Boolean(True), [FunCall(Identifier("print"), List([Integer(2)]))]),),
-        (ForStatement(Identifier("a"), Identifier("a"), [FunCall(Identifier("print"), List([Integer(2)]))]),),
-        (IfStatement(Boolean(True), [FunCall(Identifier("print"), List([Integer(2)]))], []),),
-        (ElifBlock(Boolean(True), [FunCall(Identifier("print"), List([Integer(2)]))]),),
+        (WhileStatement(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))])),),
+        (ForStatement(Identifier("a"), Identifier("a"), Block([FunCall(Identifier("print"), List([Integer(2)]))])),),
+        (IfStatement(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))]), []),),
+        (ElifBlock(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))])),),
         (ElseBlock([FunCall(Identifier("print"), List([Integer(2)]))]),),
         (ReturnStatement([Identifier("a")]),),
         (Assignment(Identifier("a"), Integer(2)),),
-        (Function(Identifier("a"), [Identifier("b")], [Assignment(Identifier("a"), Integer(2))]),),
-        (Program({"a": Function(Identifier("a"), [Identifier("b")], [Assignment(Identifier("a"), Integer(2))])}),),
+        (Function(Identifier("a"), [Identifier("b")], Block([Assignment(Identifier("a"), Integer(2))])),),
+        (Program(
+            {"a": Function(Identifier("a"), [Identifier("b")], Block([Assignment(Identifier("a"), Integer(2))]))}),),
     ])
     def test_check_objects_equality(self, case):
         self.assertEqual(case, case, f"Class {case.__class__} has wrong __eq__.")
@@ -883,38 +916,38 @@ class TestParserClasses(unittest.TestCase):
          TwoSidedExpression(Identifier("b"), Integer(2))),
         (TwoSidedExpression(Identifier("a"), Integer(2)),
          TwoSidedExpression(Identifier("a"), Integer(1))),
-        (WhileStatement(Boolean(True), [FunCall(Identifier("print"), List([Integer(2)]))]),
-         WhileStatement(Boolean(False), [FunCall(Identifier("print"), List([Integer(2)]))])),
-        (WhileStatement(Boolean(True), [FunCall(Identifier("print"), List([Integer(2)]))]),
-         WhileStatement(Boolean(True), [TwoSidedExpression(Identifier("a"), Integer(2))])),
-        (ForStatement(Identifier("a"), Identifier("a"), [FunCall(Identifier("print"), List([Integer(2)]))]),
-         ForStatement(Identifier("b"), Identifier("a"), [FunCall(Identifier("print"), List([Integer(2)]))])),
-        (ForStatement(Identifier("a"), Identifier("a"), [FunCall(Identifier("print"), List([Integer(2)]))]),
-         ForStatement(Identifier("a"), Identifier("b"), [FunCall(Identifier("print"), List([Integer(2)]))])),
-        (ForStatement(Identifier("a"), Identifier("a"), [FunCall(Identifier("print"), List([Integer(2)]))]),
-         ForStatement(Identifier("a"), Identifier("a"), [TwoSidedExpression(Identifier("a"), Integer(2))])),
-        (IfStatement(Boolean(True), [FunCall(Identifier("print"), List([Integer(2)]))], []),
-         IfStatement(Boolean(False), [FunCall(Identifier("print"), List([Integer(2)]))], [])),
-        (IfStatement(Boolean(True), [FunCall(Identifier("print"), List([Integer(2)]))], []),
-         IfStatement(Boolean(True), [TwoSidedExpression(Identifier("a"), Integer(2))], [])),
-        (IfStatement(Boolean(True), [FunCall(Identifier("print"), List([Integer(2)]))], []),
-         IfStatement(Boolean(True), [FunCall(Identifier("print"), List([Integer(2)]))],
-                     [ElifBlock(Boolean(True), [FunCall(Identifier("print"), List([Integer(2)]))])])),
-        (IfStatement(Boolean(True), [FunCall(Identifier("print"), List([Integer(2)]))],
-                     [ElifBlock(Boolean(False), [FunCall(Identifier("print"), List([Integer(2)]))])]),
-         IfStatement(Boolean(True), [FunCall(Identifier("print"), List([Integer(2)]))],
-                     [ElifBlock(Boolean(True), [FunCall(Identifier("print"), List([Integer(2)]))])])),
-        (IfStatement(Boolean(True), [FunCall(Identifier("print"), List([Integer(2)]))], []),
-         IfStatement(Boolean(True), [FunCall(Identifier("print"), List([Integer(2)]))], [],
+        (WhileStatement(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))])),
+         WhileStatement(Boolean(False), Block([FunCall(Identifier("print"), List([Integer(2)]))]))),
+        (WhileStatement(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))])),
+         WhileStatement(Boolean(True), Block([TwoSidedExpression(Identifier("a"), Integer(2))]))),
+        (ForStatement(Identifier("a"), Identifier("a"), Block([FunCall(Identifier("print"), List([Integer(2)]))])),
+         ForStatement(Identifier("b"), Identifier("a"), Block([FunCall(Identifier("print"), List([Integer(2)]))]))),
+        (ForStatement(Identifier("a"), Identifier("a"), Block([FunCall(Identifier("print"), List([Integer(2)]))])),
+         ForStatement(Identifier("a"), Identifier("b"), Block([FunCall(Identifier("print"), List([Integer(2)]))]))),
+        (ForStatement(Identifier("a"), Identifier("a"), Block([FunCall(Identifier("print"), List([Integer(2)]))])),
+         ForStatement(Identifier("a"), Identifier("a"), Block([TwoSidedExpression(Identifier("a"), Integer(2))]))),
+        (IfStatement(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))]), []),
+         IfStatement(Boolean(False), Block([FunCall(Identifier("print"), List([Integer(2)]))]), [])),
+        (IfStatement(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))]), []),
+         IfStatement(Boolean(True), Block([TwoSidedExpression(Identifier("a"), Integer(2))]), [])),
+        (IfStatement(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))]), []),
+         IfStatement(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))]),
+                     [ElifBlock(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))]))])),
+        (IfStatement(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))]),
+                     [ElifBlock(Boolean(False), Block([FunCall(Identifier("print"), List([Integer(2)]))]))]),
+         IfStatement(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))]),
+                     [ElifBlock(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))]))])),
+        (IfStatement(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))]), []),
+         IfStatement(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))]), [],
                      ElseBlock([FunCall(Identifier("print"), List([Integer(2)]))]))),
-        (IfStatement(Boolean(True), [FunCall(Identifier("print"), List([Integer(2)]))], [],
+        (IfStatement(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))]), [],
                      ElseBlock([FunCall(Identifier("input"), List([String("test")]))])),
-         IfStatement(Boolean(True), [FunCall(Identifier("print"), List([Integer(2)]))], [],
+         IfStatement(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))]), [],
                      ElseBlock([FunCall(Identifier("print"), List([Integer(2)]))]))),
-        (ElifBlock(Boolean(True), [FunCall(Identifier("print"), List([Integer(2)]))]),
-         ElifBlock(Boolean(False), [FunCall(Identifier("print"), List([Integer(2)]))])),
-        (ElifBlock(Boolean(True), [FunCall(Identifier("print"), List([Integer(2)]))]),
-         ElifBlock(Boolean(True), [TwoSidedExpression(Identifier("a"), Integer(2))])),
+        (ElifBlock(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))])),
+         ElifBlock(Boolean(False), Block([FunCall(Identifier("print"), List([Integer(2)]))]))),
+        (ElifBlock(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))])),
+         ElifBlock(Boolean(True), Block([TwoSidedExpression(Identifier("a"), Integer(2))]))),
         (ElseBlock([FunCall(Identifier("print"), List([Integer(2)]))]),
          ElseBlock([TwoSidedExpression(Identifier("a"), Integer(2))])),
         (ReturnStatement([Identifier("a")]),
@@ -923,14 +956,23 @@ class TestParserClasses(unittest.TestCase):
          Assignment(Identifier("b"), Integer(2))),
         (Assignment(Identifier("a"), Integer(2)),
          Assignment(Identifier("a"), Integer(1))),
-        (Function(Identifier("a"), [Identifier("b")], [Assignment(Identifier("a"), Integer(2))]),
-         Function(Identifier("b"), [Identifier("b")], [Assignment(Identifier("a"), Integer(2))])),
-        (Function(Identifier("a"), [Identifier("b")], [Assignment(Identifier("a"), Integer(2))]),
-         Function(Identifier("a"), [Identifier("c")], [Assignment(Identifier("a"), Integer(2))])),
-        (Function(Identifier("a"), [Identifier("b")], [Assignment(Identifier("a"), Integer(2))]),
-         Function(Identifier("a"), [Identifier("b")], [FunCall(Identifier("print"), List([Integer(2)]))])),
-        (Program({"a": Function(Identifier("a"), [Identifier("b")], [Assignment(Identifier("a"), Integer(2))])}),
-         Program({"b": Function(Identifier("b"), [Identifier("b")], [Assignment(Identifier("a"), Integer(2))])})),
+        (Function(Identifier("a"), [Identifier("b")], Block([Assignment(Identifier("a"), Integer(2))])),
+         Function(Identifier("b"), [Identifier("b")], Block([Assignment(Identifier("a"), Integer(2))]))),
+        (Function(Identifier("a"), [Identifier("b")], Block([Assignment(Identifier("a"), Integer(2))])),
+         Function(Identifier("a"), [Identifier("c")], Block([Assignment(Identifier("a"), Integer(2))]))),
+        (Function(Identifier("a"), [Identifier("b")], Block([Assignment(Identifier("a"), Integer(2))])),
+         Function(Identifier("a"), [Identifier("b")], Block([FunCall(Identifier("print"), List([Integer(2)]))]))),
+        (Program({"a": Function(Identifier("a"), [Identifier("b")], Block([Assignment(Identifier("a"), Integer(2))]))}),
+         Program(
+             {"b": Function(Identifier("b"), [Identifier("b")], Block([Assignment(Identifier("a"), Integer(2))]))})),
     ])
     def test_check_objects_inequality(self, case, compare):
         self.assertNotEqual(compare, case, f"Class {case.__class__} has wrong __eq__.")
+
+
+def suite():
+    suite = unittest.TestSuite()
+    suite.addTest(unittest.makeSuite(TestParser, 'test'))
+    suite.addTest(unittest.makeSuite(TestParserErrorHandling, 'test'))
+    suite.addTest(unittest.makeSuite(TestParserClasses, 'test'))
+    return suite
