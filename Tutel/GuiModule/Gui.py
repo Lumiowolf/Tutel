@@ -46,16 +46,16 @@ class Worker(QObject):
             self.program = self.parser.parse(self.lexer)
             self.get_start.emit(list(self.program.functions.keys()))
         except LexerException as e:
+            self.finished.disconnect()
             self.exception.emit(str(e))
-            self.finished.emit()
         except ParserException as e:
+            self.finished.disconnect()
             self.exception.emit(str(e))
-            self.finished.emit()
         except Exit:
-            self.finished.emit()
+            pass
         except Exception as e:
+            self.finished.disconnect()
             self.exception.emit(f"Unhandled exception: {e}")
-            self.finished.emit()
 
     def execute(self, start):
         if start != "":
@@ -63,13 +63,13 @@ class Worker(QObject):
                 self.interpreter = Interpreter(self.error_handler)
                 self.interpreter.execute(self.program, start)
             except InterpreterException as e:
+                self.finished.disconnect()
                 self.exception.emit(str(e))
-                self.finished.emit()
             except Exit:
-                self.finished.emit()
+                pass
             except Exception as e:
+                self.finished.disconnect()
                 self.exception.emit(f"Unhandled exception: {e}")
-                self.finished.emit()
         self.finished.emit()
 
     def stop(self):
@@ -139,6 +139,7 @@ class MainWindow(QMainWindow):
         self.execute_thread.started.connect(self.execute_worker.parse)
         self.execute_worker.finished.connect(self.stop_code_thread)
         self.execute_worker.finished.connect(self.dialog_info)
+        self.execute_worker.exception.connect(self.stop_code_thread)
         self.execute_worker.exception.connect(self.dialog_critical)
         self.execute_worker.get_start.connect(self.dialog_get_start)
         self.execute.connect(self.execute_worker.execute)
