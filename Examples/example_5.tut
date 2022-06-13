@@ -1,0 +1,19 @@
+main() {
+	turtle1 = Turtle();
+	turtle1.setPosition(500, 500);
+	draw_spiral(turtle1, 10);
+	#turtle2 = Turtle();
+	#turtle2.setPosition(3000, 3000);
+	#draw_spiral(turtle2);
+}
+
+draw_spiral(turtle, magic_number) {
+    colors = [Color.Red, Color.Cyan, Color.Yellow, Color.Green];
+    base_step = 1;
+	for(i in range(5000)) {
+		a = turtle.orientation;
+		turtle.setOrientation(a + i % magic_number);
+		turtle.forward(base_step + i);
+		turtle.setColor(colors[i % len(colors)]);
+	}
+}
