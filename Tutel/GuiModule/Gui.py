@@ -6,7 +6,7 @@ from io import StringIO
 from PySide6.QtCore import QPointF, QThread, QObject, Signal
 from PySide6.QtGui import QAction, QFont, QPainter, Qt, QPaintEvent, QTextOption, QWheelEvent, QMouseEvent, QCloseEvent
 from PySide6.QtWidgets import QApplication, QMainWindow, QTextEdit, QWidget, QGridLayout, QSplitter, QFileDialog, \
-    QMessageBox, QInputDialog, QLineEdit, QComboBox, QDialog, QDialogButtonBox
+    QMessageBox, QInputDialog
 
 import qdarktheme
 
@@ -134,13 +134,16 @@ class MainWindow(QMainWindow):
     def __run_code(self):
         self.execute_thread = QThread()
         self.execute_worker = Worker(self.code_area.toPlainText())
+        self.draw_area.setDisabled(True)
 
         self.execute_thread.started.connect(self.draw_area.set_up)
         self.execute_thread.started.connect(self.execute_worker.parse)
         self.execute_worker.finished.connect(self.stop_code_thread)
         self.execute_worker.finished.connect(self.dialog_info)
+        self.execute_worker.finished.connect(lambda: self.draw_area.setEnabled(True))
         self.execute_worker.exception.connect(self.stop_code_thread)
         self.execute_worker.exception.connect(self.dialog_critical)
+        self.execute_worker.exception.connect(lambda: self.draw_area.setEnabled(True))
         self.execute_worker.get_start.connect(self.dialog_get_start)
         self.execute.connect(self.execute_worker.execute)
         self.execute_worker.add_turtle.connect(self.draw_area.add_turtle)
