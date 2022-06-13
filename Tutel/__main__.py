@@ -2,21 +2,16 @@ import atexit
 import logging
 import signal
 import sys
-import threading
 from time import sleep
 
 from Tutel.ErrorHandlerModule.ErrorHandler import ErrorHandler
 from Tutel.GuiModule.Gui import Gui
-from Tutel.InterpreterModuler.Interpreter import Interpreter
 
 
 def main():
     error_handler = ErrorHandler(level=logging.CRITICAL)
     gui = Gui(error_handler)
     gui.run()
-    gui_thread = threading.Thread(target=gui.run)
-    gui_thread.start()
-    gui_thread.join()
 
 
 def _exit(*args):

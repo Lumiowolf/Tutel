@@ -124,14 +124,14 @@ class Interpreter:
         self.error_handler.handle_error(Exit())
 
     def visit_program(self, obj: Classes.Program):
-        self._add_function_context()
-        self._add_context()
         if self.start_with is None:
             self.start_with_fun = list(obj.functions.values())[0]
         elif self.start_with in obj.functions.keys():
             self.start_with_fun = obj.functions[self.start_with]
         else:
             self.error_handler.handle_error(NotDefinedException(name=self.start_with))
+        self._add_function_context()
+        self._add_context()
         self.start_with_fun.accept(self)
         self._drop_context()
         self._drop_function_context()
@@ -253,7 +253,7 @@ class Interpreter:
         self.return_flag = True
         self.last_returned = [el.accept(self) for el in obj.values]
         if len(self.last_returned) == 0:
-            self.last_returned = None
+            self.last_returned = Value(None)
         elif len(self.last_returned) == 1:
             self.last_returned = self.last_returned[0]
 
@@ -283,14 +283,14 @@ class Interpreter:
         return result
 
     def _run_local_function(self, function_name, arguments):
-        self._add_function_context()
-        self._add_context()
         function = self.program.functions[function_name]
         if len(arguments) != len(function.params):
             self.error_handler.handle_error(
                 MismatchedArgsCountException(fun_name=function_name, expected_number=len(function.params),
                                              got_number=len(arguments)))
         self.evaluate = False
+        self._add_function_context()
+        self._add_context()
         for arg, param in zip(arguments, function.params):
             self._set_local_var(param.accept(self), arg)
         self.evaluate = True
@@ -345,7 +345,7 @@ class Interpreter:
 
 if __name__ == '__main__':
     error_handler = ErrorHandler()
-    with open("../../Examples/example_4.tut", "r") as file:
+    with open("../../Examples/test.tut", "r") as file:
         try:
             lexer = Lexer(file, error_handler)
         except LexerException as e:

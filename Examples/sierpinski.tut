@@ -1,0 +1,25 @@
+sierpinski_triangle(colors, turtle, rank, length) {
+    turtle.setColor(colors[rank-1]);
+    if(rank == 0) {
+        for(_ in range(3)) {
+            turtle.forward(length);
+            orientation = turtle.orientation;
+            turtle.setOrientation(orientation + 120);
+        }
+        return;
+    }
+
+    for(_ in range(3)) {
+        sierpinski_triangle(colors, turtle, rank - 1, length / 2);
+        turtle.setColor(colors[rank-1]);
+        turtle.forward(length);
+        orientation = turtle.orientation;
+        turtle.setOrientation(orientation + 120);
+    }
+}
+
+main() {
+    colors = [Color.Red, Color.Cyan, Color.Yellow, Color.Gray, Color.Blue, Color.Green];
+    turtle = Turtle();
+    sierpinski_triangle(colors, turtle, 6, 300);
+}
