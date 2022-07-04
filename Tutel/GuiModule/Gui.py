@@ -3,12 +3,11 @@ import os
 import sys
 from io import StringIO
 
+import qdarktheme
 from PySide6.QtCore import QPointF, QThread, QObject, Signal
 from PySide6.QtGui import QAction, QFont, QPainter, Qt, QPaintEvent, QTextOption, QWheelEvent, QMouseEvent, QCloseEvent
 from PySide6.QtWidgets import QApplication, QMainWindow, QTextEdit, QWidget, QGridLayout, QSplitter, QFileDialog, \
     QMessageBox, QInputDialog
-
-import qdarktheme
 
 from Tutel.ErrorHandlerModule.ErrorHandler import ErrorHandler
 from Tutel.ErrorHandlerModule.ErrorType import LexerException, ParserException, InterpreterException, Exit
@@ -501,15 +500,18 @@ class DrawArea(QWidget):
         qp.end()
 
     def _get_lines(self):
+        # result = [self.turtles[turtle_id]["lines"] for turtle_id in self.turtles.keys()]
+        # for turtle_id in self.turtles.keys():
+        #     lines = []
+        #     for line in self.turtles[turtle_id]["lines"]:
+        #         line["points"] = [(point - self.focus_point) * self.factor + self.focus_point - self.shift for point in
+        #                           line["points"]]
+        #         lines.append(line)
+        #     self.turtles[turtle_id]["lines"] = lines
+        #     result += lines
         result = []
         for turtle_id in self.turtles.keys():
-            lines = []
-            for line in self.turtles[turtle_id]["lines"]:
-                line["points"] = [(point - self.focus_point) * self.factor + self.focus_point - self.shift for point in
-                                  line["points"]]
-                lines.append(line)
-            self.turtles[turtle_id]["lines"] = lines
-            result += lines
+            result += self.turtles[turtle_id]["lines"]
         return result
 
     def wheelEvent(self, event: QWheelEvent) -> None:
@@ -517,6 +519,7 @@ class DrawArea(QWidget):
             self.factor = 1.1
         if event.angleDelta().y() < 0:
             self.factor = 0.9
+        self.adjust()
         self.update()
 
     def mousePressEvent(self, event: QMouseEvent) -> None:
@@ -528,12 +531,20 @@ class DrawArea(QWidget):
         if self.drag:
             self.shift = self.start_pos - event.globalPosition()
             self.start_pos = event.globalPosition()
+            self.adjust()
             self.update()
         self.focus_point = event.globalPosition()
 
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:
         self.drag = False
         self.shift = QPointF(0.0, 0.0)
+
+    def adjust(self):
+        for turtle_id in self.turtles:
+            for i in range(len(self.turtles[turtle_id]["lines"])):
+                self.turtles[turtle_id]["lines"][i]["points"] = [
+                    (point - self.focus_point) * self.factor + self.focus_point - self.shift for point in
+                    self.turtles[turtle_id]["lines"][i]["points"]]
 
 
 class CodeArea(QTextEdit):
