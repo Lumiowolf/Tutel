@@ -1,3 +1,4 @@
+import logging
 import unittest
 from io import StringIO
 
@@ -25,7 +26,7 @@ class TestLexerSimple(unittest.TestCase):
     def test_skip_whites(self, case, expect):
         # GIVEN
         source = case
-        lexer = Lexer(StringIO(source), ErrorHandler())
+        lexer = Lexer(StringIO(source), get_error_handler())
 
         # WHEN
         token = lexer.get_next_token()
@@ -37,7 +38,7 @@ class TestLexerSimple(unittest.TestCase):
         # GIVEN
         source = "\x03"
         expected = Token(TokenType.T_ETX, '\x03', 1, 1)
-        lexer = Lexer(StringIO(source), ErrorHandler())
+        lexer = Lexer(StringIO(source), get_error_handler())
 
         # WHEN
         token = lexer.get_next_token()
@@ -54,7 +55,7 @@ class TestLexerSimple(unittest.TestCase):
         # GIVEN
         source = case
         expected = Token(TokenType.T_COMMENT, expect, 1, 1)
-        lexer = Lexer(StringIO(source), ErrorHandler())
+        lexer = Lexer(StringIO(source), get_error_handler())
 
         # WHEN
         token = lexer.get_next_token()
@@ -76,7 +77,7 @@ class TestLexerSimple(unittest.TestCase):
         # GIVEN
         source = case
         expected = Token(TokenType.T_IDENTIFIER, expect, 1, 1)
-        lexer = Lexer(StringIO(source), ErrorHandler())
+        lexer = Lexer(StringIO(source), get_error_handler())
 
         # WHEN
         token = lexer.get_next_token()
@@ -103,7 +104,7 @@ class TestLexerSimple(unittest.TestCase):
         # GIVEN
         source = case
         expected = Token(keywords[expect], expect, 1, 1)
-        lexer = Lexer(StringIO(source), ErrorHandler())
+        lexer = Lexer(StringIO(source), get_error_handler())
 
         # WHEN
         token = lexer.get_next_token()
@@ -125,7 +126,7 @@ class TestLexerSimple(unittest.TestCase):
         # GIVEN
         source = case
         expected = Token(TokenType.T_TEXT_CONST, expect, 1, 1)
-        lexer = Lexer(StringIO(source), ErrorHandler())
+        lexer = Lexer(StringIO(source), get_error_handler())
 
         # WHEN
         token = lexer.get_next_token()
@@ -144,7 +145,7 @@ class TestLexerSimple(unittest.TestCase):
         # GIVEN
         source = case
         expected = Token(TokenType.T_NUMBER, expect, 1, 1)
-        lexer = Lexer(StringIO(source), ErrorHandler())
+        lexer = Lexer(StringIO(source), get_error_handler())
 
         # WHEN
         token = lexer.get_next_token()
@@ -171,7 +172,7 @@ class TestLexerSimple(unittest.TestCase):
         # GIVEN
         source = case
         expected = Token(operators[expect], expect, 1, 1)
-        lexer = Lexer(StringIO(source), ErrorHandler())
+        lexer = Lexer(StringIO(source), get_error_handler())
 
         # WHEN
         token = lexer.get_next_token()
@@ -215,7 +216,7 @@ class TestLexerComplexer(unittest.TestCase):
     ])
     def test_get_next_token_one_line(self, source, expected):
         # GIVEN
-        lexer = Lexer(StringIO(source), ErrorHandler())
+        lexer = Lexer(StringIO(source), get_error_handler())
         result = []
 
         # WHEN
@@ -250,7 +251,7 @@ class TestLexerComplexer(unittest.TestCase):
     ])
     def test_get_next_token_multiple_lines(self, source, expected):
         # GIVEN
-        lexer = Lexer(StringIO(source), ErrorHandler())
+        lexer = Lexer(StringIO(source), get_error_handler())
         result = []
 
         # WHEN
@@ -264,6 +265,10 @@ class TestLexerComplexer(unittest.TestCase):
         self.assertEqual(expected, result, "Wrong tokens detected.")
 
 
+def get_error_handler():
+    return ErrorHandler(logging.CRITICAL)
+
+
 class TestLexerErrorHandling(unittest.TestCase):
     @parameterized.expand([
         ('\1', '\1'),
@@ -273,7 +278,7 @@ class TestLexerErrorHandling(unittest.TestCase):
         # GIVEN
         source = case
         expected = Token(TokenType.T_UNKNOWN, expect, 1, 1)
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(source), error_handler)
 
         # THEN
@@ -288,7 +293,7 @@ class TestLexerErrorHandling(unittest.TestCase):
         # GIVEN
         source = case
         expected = Token(TokenType.T_ILLEGAL, expect, 1, 2)
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(source), error_handler)
 
         # THEN
@@ -303,7 +308,7 @@ class TestLexerErrorHandling(unittest.TestCase):
         # GIVEN
         source = case
         expected = Token(TokenType.T_ILLEGAL, expect, 1, 1)
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(source), error_handler)
 
         # THEN
@@ -318,7 +323,7 @@ class TestLexerErrorHandling(unittest.TestCase):
         # GIVEN
         source = case
         expected = Token(TokenType.T_ILLEGAL, expect, 1, 1)
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(source), error_handler)
 
         # THEN
@@ -333,7 +338,7 @@ class TestLexerErrorHandling(unittest.TestCase):
         # GIVEN
         source = case
         expected = Token(TokenType.T_ILLEGAL, expect, 1, 1)
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(source), error_handler)
 
         # THEN
@@ -348,7 +353,7 @@ class TestLexerErrorHandling(unittest.TestCase):
         # GIVEN
         source = case
         expected = Token(TokenType.T_ILLEGAL, expect, 1, 1)
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(source), error_handler)
 
         # THEN
@@ -363,7 +368,7 @@ class TestLexerErrorHandling(unittest.TestCase):
         # GIVEN
         source = case
         expected = Token(TokenType.T_ILLEGAL, expect, 1, 2)
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(source), error_handler)
 
         # THEN
@@ -378,7 +383,7 @@ class TestLexerErrorHandling(unittest.TestCase):
         # GIVEN
         source = case
         expected = Token(TokenType.T_ILLEGAL, expect, 1, 2)
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(source), error_handler)
 
         # THEN
@@ -387,8 +392,8 @@ class TestLexerErrorHandling(unittest.TestCase):
 
 
 def suite():
-    suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(TestLexerSimple, 'test'))
-    suite.addTest(unittest.makeSuite(TestLexerComplexer, 'test'))
-    suite.addTest(unittest.makeSuite(TestLexerErrorHandling, 'test'))
-    return suite
+    suite_ = unittest.TestSuite()
+    suite_.addTest(unittest.makeSuite(TestLexerSimple, 'test'))
+    suite_.addTest(unittest.makeSuite(TestLexerComplexer, 'test'))
+    suite_.addTest(unittest.makeSuite(TestLexerErrorHandling, 'test'))
+    return suite_

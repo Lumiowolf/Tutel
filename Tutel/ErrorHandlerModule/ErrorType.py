@@ -353,19 +353,29 @@ class AttributeException(InterpreterException):
 
 
 class MismatchedArgsCountException(InterpreterException):
-    def __init__(self, fun_name, got_number=None, expected_number=None) -> None:
+    def __init__(self, fun_name, got_number=None, expected_min=None, expected_max=None) -> None:
         super().__init__()
         self.fun_name = fun_name
-        self.expected_number = expected_number
+        self.expected_min = expected_min
+        self.expected_max = expected_max
+        if self.expected_min is not None and self.expected_max is not None:
+            if self.expected_min == self.expected_max:
+                self.expected_number = self.expected_min
+                self.expected_min = None
+                self.expected_max = None
         self.got_number = got_number
 
     def __str__(self) -> str:
-        if self.expected_number is None:
+        if self.expected_min is not None and self.expected_max is not None and self.got_number is not None:
             msg = f"{self.base_msg}" \
-                  f"{self.fun_name}() got wrong number of arguments"
-        else:
+                  f"{self.fun_name}() takes from {self.expected_min} to {self.expected_max} arguments " \
+                  f"but {self.got_number} were given"
+        elif self.expected_number is not None and self.got_number is not None:
             msg = f"{self.base_msg}" \
                   f"{self.fun_name}() takes {self.expected_number} arguments but {self.got_number} were given"
+        else:
+            msg = f"{self.base_msg}" \
+                  f"{self.fun_name}() got wrong number of arguments"
         return msg.encode("unicode-escape").decode()
 
 
@@ -399,4 +409,47 @@ class RecursionException(InterpreterException):
     def __str__(self) -> str:
         msg = f"{self.base_msg}" \
               f"maximum recursion depth exceeded"
+        return msg.encode("unicode-escape").decode()
+
+
+class BuiltinFunctionShadowException(InterpreterException):
+    def __init__(self, fun_name: str) -> None:
+        super().__init__()
+        self.fun_name = fun_name
+
+    def __str__(self) -> str:
+        msg = f"{self.base_msg}" \
+              f"function '{self.fun_name}' shadows builtin function"
+        return msg.encode("unicode-escape").decode()
+
+
+class TypeException(InterpreterException):
+    def __init__(self, e: TypeError) -> None:
+        super().__init__()
+        self.exception = e
+
+    def __str__(self) -> str:
+        msg = f"{self.base_msg}" \
+              f"{self.exception}"
+        return msg.encode("unicode-escape").decode()
+
+
+##################
+# Gui exceptions #
+##################
+
+
+class GuiException(TutelException):
+    def __init__(self) -> None:
+        self.base_msg = "Gui error: "
+
+
+class SetColorException(GuiException):
+    def __init__(self, turtle_id: int) -> None:
+        super().__init__()
+        self.turtle_id = turtle_id
+
+    def __str__(self) -> str:
+        msg = f"{self.base_msg}" \
+              f"unable to set color of turtle id: {self.turtle_id}"
         return msg.encode("unicode-escape").decode()

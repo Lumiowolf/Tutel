@@ -291,7 +291,7 @@ class Parser:
         if (body := self.try_parse_compound_statement_body()) is None:
             self.error_handler.handle_error(MissingBodyException(self.try_parse_else_block.__name__, self.lexer.token))
 
-        return ElseBlock(body)
+        return ElseBlock(body, position)
 
     def try_parse_for_statement(self) -> ForStatement | None:
         position = self._get_position()

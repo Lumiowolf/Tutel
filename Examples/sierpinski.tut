@@ -1,25 +1,25 @@
-sierpinski_triangle(turtle, rank, length) {
-    #turtle.setColor(colors[rank-1]);
+sierpinski_triangle(turtle, rank, length, colors) {
+    turtle.set_color(colors[rank % 2 - 1]);
     if(rank == 0) {
         for(_ in range(3)) {
             turtle.forward(length);
             orientation = turtle.orientation;
-            turtle.setOrientation(orientation + 120);
+            turtle.set_orientation(orientation + 120);
         }
         return;
     }
 
     for(_ in range(3)) {
-        sierpinski_triangle(turtle, rank - 1, length / 2);
-        #turtle.setColor(colors[rank-1]);
+        sierpinski_triangle(turtle, rank - 1, length / 2, colors);
+        turtle.set_color(colors[rank % 2 - 1]);
         turtle.forward(length);
         orientation = turtle.orientation;
-        turtle.setOrientation(orientation + 120);
+        turtle.set_orientation(orientation + 120);
     }
 }
 
 main() {
-    #colors = [Color.Red, Color.Cyan, Color.Yellow, Color.Gray, Color.Blue, Color.Green];
+    colors = [Color(252, 90, 141), Color(0, 0, 255)];
     turtle = Turtle();
-    sierpinski_triangle(turtle, 6, 600);
+    sierpinski_triangle(turtle, 6, 600, colors);
 }

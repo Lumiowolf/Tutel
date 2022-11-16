@@ -2,14 +2,14 @@ class Visited:
     def __init__(self, position: (int, int) = ()):
         self.position = position
 
-    def accept(self, visitor):
-        return visitor.visit(self)
-
 
 class Program(Visited):
     def __init__(self, functions: dict[str, "Function"]) -> None:
         super().__init__((1, 1))
         self.functions = functions
+
+    def accept(self, visitor):
+        return visitor.visit_program(self)
 
     def __repr__(self):
         return f"{type(self).__name__}({self.functions})"
@@ -21,11 +21,15 @@ class Program(Visited):
 
 
 class Function(Visited):
-    def __init__(self, name: "Identifier", params: list["Identifier"], statements: "Block", position: (int, int) = ()) -> None:
+    def __init__(self, name: "Identifier", params: list["Identifier"], statements: "Block",
+                 position: (int, int) = ()) -> None:
         super().__init__(position)
         self.name = name
         self.params = params
         self.statements = statements
+
+    def accept(self, visitor):
+        return visitor.visit_function(self)
 
     def __repr__(self):
         return f"{type(self).__name__}({self.name}, {self.params}, {self.statements})"
@@ -41,11 +45,12 @@ class Function(Visited):
 
 
 class Block(list, Visited):
-    def __init__(self, statements: list["Statement"] = ()) -> None:
+    def __init__(self, statements: list["Statement"] = (), position: (int, int) = ()) -> None:
         super().__init__(statements)
+        self.position = position
 
-    # def __repr__(self):
-    #     return f"{type(self).__name__}({self})"
+    def accept(self, visitor):
+        return visitor.visit_block(self)
 
 
 class Statement(Visited):
@@ -75,32 +80,43 @@ class BasicAssignment(Assignment):
         super().__init__(left_expr, right_expr, position)
         self.operator = '='
 
+    def accept(self, visitor):
+        return visitor.visit_basic_assignment(self)
 
-class AddAssignment(Assignment):
+
+class ModifyingAssignment(Assignment):
+    def __init__(self, left_expr: "Expression", right_expr: "Expression", position: (int, int) = ()) -> None:
+        super().__init__(left_expr, right_expr, position)
+
+    def accept(self, visitor):
+        return visitor.visit_modifying_assignment(self)
+
+
+class AddAssignment(ModifyingAssignment):
     def __init__(self, left_expr: "Identifier", right_expr: "Expression", position: (int, int) = ()) -> None:
         super().__init__(left_expr, right_expr, position)
         self.operator = '+='
 
 
-class SubAssignment(Assignment):
+class SubAssignment(ModifyingAssignment):
     def __init__(self, left_expr: "Identifier", right_expr: "Expression", position: (int, int) = ()) -> None:
         super().__init__(left_expr, right_expr, position)
         self.operator = '-='
 
 
-class MulAssignment(Assignment):
+class MulAssignment(ModifyingAssignment):
     def __init__(self, left_expr: "Identifier", right_expr: "Expression", position: (int, int) = ()) -> None:
         super().__init__(left_expr, right_expr, position)
         self.operator = '*='
 
 
-class DivAssignment(Assignment):
+class DivAssignment(ModifyingAssignment):
     def __init__(self, left_expr: "Identifier", right_expr: "Expression", position: (int, int) = ()) -> None:
         super().__init__(left_expr, right_expr, position)
         self.operator = '/='
 
 
-class ModAssignment(Assignment):
+class ModAssignment(ModifyingAssignment):
     def __init__(self, left_expr: "Identifier", right_expr: "Expression", position: (int, int) = ()) -> None:
         super().__init__(left_expr, right_expr, position)
         self.operator = '%='
@@ -110,6 +126,9 @@ class ReturnStatement(Statement):
     def __init__(self, values: list["Expression"], position: (int, int) = ()) -> None:
         super().__init__(position)
         self.values = values
+
+    def accept(self, visitor):
+        return visitor.visit_return_statement(self)
 
     def __repr__(self):
         return f"{type(self).__name__}({self.values})"
@@ -128,6 +147,9 @@ class IfStatement(Statement):
         self.statements = statements
         self.elif_stmts = elif_stmts
         self.else_stmt = else_stmt
+
+    def accept(self, visitor):
+        return visitor.visit_if_statement(self)
 
     def __repr__(self):
         return f"{type(self).__name__}({self.condition}, {self.statements}, {self.elif_stmts}, {self.else_stmt})"
@@ -154,6 +176,9 @@ class ElifBlock(Visited):
         self.condition = condition
         self.statements = statements
 
+    def accept(self, visitor):
+        return visitor.visit_elif_block(self)
+
     def __repr__(self):
         return f"{type(self).__name__}({self.condition}, {self.statements})"
 
@@ -166,15 +191,23 @@ class ElifBlock(Visited):
 
 
 class ElseBlock(Block):
-    pass
+    def __init__(self, statements: "Block", position: (int, int) = ()) -> None:
+        super().__init__(statements, position)
+
+    def accept(self, visitor):
+        return visitor.visit_else_block(self)
 
 
 class ForStatement(Statement):
-    def __init__(self, iterator: "Identifier", iterable: "Expression", statements: "Block", position: (int, int) = ()) -> None:
+    def __init__(self, iterator: "Identifier", iterable: "Expression", statements: "Block",
+                 position: (int, int) = ()) -> None:
         super().__init__(position)
         self.iterator = iterator
         self.iterable = iterable
         self.statements = statements
+
+    def accept(self, visitor):
+        return visitor.visit_for_statement(self)
 
     def __repr__(self):
         return f"{type(self).__name__}({self.iterator}, {self.iterable}, {self.statements})"
@@ -194,6 +227,9 @@ class WhileStatement(Statement):
         super().__init__(position)
         self.condition = condition
         self.statements = statements
+
+    def accept(self, visitor):
+        return visitor.visit_while_statement(self)
 
     def __repr__(self):
         return f"{type(self).__name__}({self.condition}, {self.statements})"
@@ -221,7 +257,12 @@ class TwoSidedExpression(Statement):
             return False
         if self.right_expr != other.right_expr:
             return False
+        if self.operator != other.operator:
+            return False
         return True
+
+    def accept(self, visitor):
+        return visitor.visit_two_sided_expression(self)
 
 
 class OrExpr(TwoSidedExpression):
@@ -234,13 +275,6 @@ class AndExpr(TwoSidedExpression):
     def __init__(self, left_expr: "Expression", right_expr: "Expression", position: (int, int) = ()) -> None:
         super().__init__(left_expr, right_expr, position)
         self.operator = "and"
-
-
-class InvertExpr(Statement):
-    def __init__(self, value: "Expression") -> None:
-        super().__init__(value.position)
-        self.value = value
-        self.operator = "-"
 
 
 class EqExpr(TwoSidedExpression):
@@ -321,6 +355,38 @@ class IntDivExpr(TwoSidedExpression):
         self.operator = "//"
 
 
+class OneSidedExpression(Statement):
+    def __init__(self, value: "Expression", position: (int, int) = ()) -> None:
+        super().__init__(position)
+        self.value = value
+        self.operator = None
+
+    def __repr__(self):
+        return f"{type(self).__name__}({self.value})"
+
+    def __eq__(self, other):
+        if self.value != other.value:
+            return False
+        if self.operator != other.operator:
+            return False
+        return True
+
+    def accept(self, visitor):
+        return visitor.visit_one_sided_expression(self)
+
+
+class InvertExpr(OneSidedExpression):
+    def __init__(self, value: "Expression") -> None:
+        super().__init__(value, value.position)
+        self.operator = "-"
+
+
+class Negate(OneSidedExpression):
+    def __init__(self, value: "Expression", position: (int, int) = ()) -> None:
+        super().__init__(value, position)
+        self.operator = "not"
+
+
 class Assignable:
     pass
 
@@ -330,38 +396,47 @@ class DotOperator(TwoSidedExpression, Assignable):
         super().__init__(left_expr, right_expr, position)
         self.operator = "."
 
+    def accept(self, visitor):
+        return visitor.visit_dot_operator(self)
+
 
 class FunCall(TwoSidedExpression, Assignable):
     def __repr__(self):
         return f"{type(self).__name__}({self.left_expr}, {self.right_expr})"
 
+    def accept(self, visitor):
+        return visitor.visit_fun_call(self)
+
 
 class ListElement(TwoSidedExpression, Assignable):
-    pass
+    def accept(self, visitor):
+        return visitor.visit_list_element(self)
 
 
 class Atom(Statement):
-    def __init__(self, value: "Expression | list[Expression] | str | int | bool | None", position: (int, int) = ()) -> None:
+    def __init__(self, value: "Expression | list[Expression] | str | int | bool | None",
+                 position: (int, int) = ()) -> None:
         super().__init__(position)
         self.value = value
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"{type(self).__name__}({self.value})"
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         if self.value != other.value:
             return False
         return True
 
-
-class Negate(Atom):
-    def __init__(self, value: "Expression", position: (int, int) = ()) -> None:
-        super().__init__(value, position)
+    def accept(self, visitor):
+        return visitor.visit_atom(self)
 
 
 class List(Atom):
     def __init__(self, value: list["Expression"], position: (int, int) = ()) -> None:
         super().__init__(value, position)
+
+    def accept(self, visitor):
+        return visitor.visit_list(self)
 
 
 class String(Atom):
@@ -397,5 +472,8 @@ class Identifier(Atom, Assignable):
     def __repr__(self):
         return f"{type(self).__name__}(\"{self.value}\")"
 
+    def accept(self, visitor):
+        return visitor.visit_identifier(self)
 
-Expression = TwoSidedExpression | Atom | list["Expression"]
+
+Expression = OneSidedExpression | TwoSidedExpression | Atom | list["Expression"]

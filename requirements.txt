@@ -3,4 +3,3 @@ PyQt6
 PySide6
 pyqtdarktheme
 numpy
-mutableint

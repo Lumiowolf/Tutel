@@ -1,17 +1,11 @@
 import atexit
-import logging
 import signal
 import sys
 from time import sleep
 
-from Tutel.ErrorHandlerModule.ErrorHandler import ErrorHandler
-from Tutel.GuiModule.Gui import Gui
-
 
 def main():
-    error_handler = ErrorHandler(level=logging.CRITICAL)
-    gui = Gui(error_handler)
-    gui.run()
+    pass
 
 
 def _exit(*args):
@@ -29,7 +23,6 @@ def _exit(*args):
 
 
 _exit.alreadyExited = False
-
 
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, _exit)

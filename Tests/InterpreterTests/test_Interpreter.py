@@ -1,3 +1,4 @@
+import logging
 import unittest
 from io import StringIO
 
@@ -7,12 +8,21 @@ from Tutel.ErrorHandlerModule.ErrorHandler import ErrorHandler
 from Tutel.ErrorHandlerModule.ErrorType import InterpreterException, NothingToRunException, RecursionException, \
     NotDefinedException, NotIterableException, CannotAssignException, UnsupportedOperandException, \
     BadOperandForUnaryException, AttributeException, MismatchedArgsCountException, OutOfRangeException
+from Tutel.GuiModule.GuiMock import GuiMock
 from Tutel.InterpreterModuler.Interpreter import Interpreter
+from Tutel.InterpreterModuler.Turtle.Turtle import Turtle
 from Tutel.LexerModule.Lexer import Lexer
 from Tutel.ParserModule.Parser import Parser
 
 
+def get_error_handler():
+    return ErrorHandler(level=logging.CRITICAL)
+
+
 class TestInterpreter(unittest.TestCase):
+    # def setUp(self) -> None:
+    #     Turtle.set_gui(GuiMock())
+
     @parameterized.expand([
         ("foo(){a = 1;}",),
         ("foo(){a = 1;a += 1;}",),
@@ -105,7 +115,7 @@ class TestInterpreter(unittest.TestCase):
     ])
     def test_basic(self, case):
         # GIVEN
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
         program = parser.parse(lexer)
@@ -121,17 +131,17 @@ class TestInterpreter(unittest.TestCase):
 
     @parameterized.expand([
         ("foo(){a = Turtle();}",),
-        ("foo(){a = Turtle();a.setColor(Color.Blue);}",),
-        ("foo(){a = Turtle();a.setPosition(20, 20);}",),
-        ("foo(){a = Turtle();a.setOrientation(45);}",),
+        ("foo(){a = Turtle();a.color = Color(0, 0, 255);}",),
+        ("foo(){a = Turtle();a.position = Position(20, 20);}",),
+        ("foo(){a = Turtle();a.orientation = 45;}",),
         ("foo(){a = Turtle();a.forward(45);}",),
-        ("foo(){a = Turtle();a.forward(45);b = Turtle();b.setColor(Color.Red);}",),
-        ("foo(){a = Turtle();a.turnRight();}",),
-        ("foo(){a = Turtle();a.turnLeft();}",),
+        ("foo(){a = Turtle();a.forward(45);b = Turtle();b.color = Color(255, 0, 0);}",),
+        ("foo(){a = Turtle();a.turn_right();}",),
+        ("foo(){a = Turtle();a.turn_left();}",),
     ])
     def test_builtins(self, case):
         # GIVEN
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
         program = parser.parse(lexer)
@@ -164,7 +174,7 @@ class TestInterpreter(unittest.TestCase):
     ])
     def test_exceptions(self, case, exception):
         # GIVEN
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
         program = parser.parse(lexer)
@@ -177,7 +187,7 @@ class TestInterpreter(unittest.TestCase):
         # GIVEN
         case = "foo(){a += 1;}boo(){}"
         start_with = "boo"
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
         program = parser.parse(lexer)
@@ -195,7 +205,7 @@ class TestInterpreter(unittest.TestCase):
         case = "foo(){a += 1;}"
         start_with = "boo"
         exception = NotDefinedException
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
         program = parser.parse(lexer)
@@ -206,6 +216,6 @@ class TestInterpreter(unittest.TestCase):
 
 
 def suite():
-    suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(TestInterpreter, 'test'))
-    return suite
+    suite_ = unittest.TestSuite()
+    suite_.addTest(unittest.makeSuite(TestInterpreter, 'test'))
+    return suite_

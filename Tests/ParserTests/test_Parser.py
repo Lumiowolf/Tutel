@@ -1,3 +1,4 @@
+import logging
 import unittest
 from io import StringIO
 
@@ -11,14 +12,14 @@ from Tutel.ErrorHandlerModule.ErrorType import MissingLeftBracketException, Miss
     MissingIteratorException, MissingIterableException, MissingKeywordInException, ExprMissingRightSideException, \
     MissingIdentifierAfterDotException
 from Tutel.LexerModule.Lexer import Lexer
-from Tutel.ParserModule.Parser import Parser
 from Tutel.ParserModule.Classes import (
     Program, Function, Identifier, BasicAssignment, Integer, AddAssignment, SubAssignment,
     MulAssignment, DivAssignment, ModAssignment, ReturnStatement, AddExpr, SubExpr, IfStatement, GreaterExpr, ElifBlock,
     AndExpr, OrExpr, ElseBlock, FunCall, ForStatement, WhileStatement, MulExpr, EqExpr, NotEqExpr,
     LessExpr, GreaterEqExpr, LessEqExpr, InExpr, DivExpr, ModExpr, IntDivExpr, DotOperator, ListElement, List, String,
-    Boolean, Null, Negate, TwoSidedExpression, Assignment, Atom, Block
+    Boolean, Null, Negate, TwoSidedExpression, Assignment, Atom, Block, InvertExpr
 )
+from Tutel.ParserModule.Parser import Parser
 
 
 class TestParser(unittest.TestCase):
@@ -30,7 +31,7 @@ class TestParser(unittest.TestCase):
     ])
     def test_skip_comment(self, case, expect):
         # GIVEN
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
 
@@ -48,7 +49,7 @@ class TestParser(unittest.TestCase):
     ])
     def test_try_parse_function_def(self, case, expect):
         # GIVEN
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
 
@@ -71,7 +72,7 @@ class TestParser(unittest.TestCase):
     ])
     def test_try_parse_params_list(self, case, expect):
         # GIVEN
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
 
@@ -93,7 +94,7 @@ class TestParser(unittest.TestCase):
     ])
     def test_try_parse_block(self, case, expect):
         # GIVEN
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
 
@@ -119,7 +120,7 @@ class TestParser(unittest.TestCase):
     ])
     def test_try_parse_assignment(self, case, expect):
         # GIVEN
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
 
@@ -143,7 +144,7 @@ class TestParser(unittest.TestCase):
     ])
     def test_try_parse_return_statement(self, case, expect):
         # GIVEN
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
 
@@ -166,7 +167,7 @@ class TestParser(unittest.TestCase):
     ])
     def test_try_parse_if_statement(self, case, expect):
         # GIVEN
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
 
@@ -199,11 +200,11 @@ class TestParser(unittest.TestCase):
                                     Block([AddAssignment(Identifier("e"), Integer(1))])),
                           ElifBlock(OrExpr(Identifier("d"), Identifier("f")),
                                     Block([BasicAssignment(Identifier("e"), Integer(1))]))],
-                         ElseBlock([FunCall(Identifier("print"), [Identifier("a")])]))]))})),
+                         ElseBlock(Block([FunCall(Identifier("print"), [Identifier("a")])])))]))})),
     ])
     def test_try_parse_elif_block(self, case, expect):
         # GIVEN
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
 
@@ -219,7 +220,7 @@ class TestParser(unittest.TestCase):
              IfStatement(GreaterExpr(Identifier("a"), Identifier("b")),
                          Block([AddAssignment(Identifier("a"), Integer(1))]),
                          [],
-                         ElseBlock([FunCall(Identifier("print"), [Identifier("a")])]))]))})),
+                         ElseBlock(Block([FunCall(Identifier("print"), [Identifier("a")])])))]))})),
         ("foo(){if(a > b){a += 1;} elif(c and d){e += 1;} elif(d or f){e = 1;} else{print(a);}}",
          Program({"foo": Function(Identifier("foo"), [], Block([
              IfStatement(GreaterExpr(Identifier("a"), Identifier("b")),
@@ -228,11 +229,11 @@ class TestParser(unittest.TestCase):
                                     Block([AddAssignment(Identifier("e"), Integer(1))])),
                           ElifBlock(OrExpr(Identifier("d"), Identifier("f")),
                                     Block([BasicAssignment(Identifier("e"), Integer(1))]))],
-                         ElseBlock([FunCall(Identifier("print"), [Identifier("a")])]))]))})),
+                         ElseBlock(Block([FunCall(Identifier("print"), [Identifier("a")])])))]))})),
     ])
     def test_try_parse_else_block(self, case, expect):
         # GIVEN
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
 
@@ -254,7 +255,7 @@ class TestParser(unittest.TestCase):
     ])
     def test_try_parse_for_statement(self, case, expect):
         # GIVEN
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
 
@@ -276,7 +277,7 @@ class TestParser(unittest.TestCase):
     ])
     def test_try_parse_while_statement(self, case, expect):
         # GIVEN
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
 
@@ -291,7 +292,7 @@ class TestParser(unittest.TestCase):
          Program({"foo": Function(Identifier("foo"), [], Block([
              BasicAssignment(
                  Identifier("a"),
-                 OrExpr(AndExpr(Negate(Identifier("a")), Identifier("b")),
+                 OrExpr(AndExpr(InvertExpr(Identifier("a")), Identifier("b")),
                         AndExpr(
                             SubExpr(Identifier("c"),
                                     MulExpr(Integer(2), Integer(3))),
@@ -299,7 +300,7 @@ class TestParser(unittest.TestCase):
     ])
     def test_try_parse_expression(self, case, expect):
         # GIVEN
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
 
@@ -317,7 +318,7 @@ class TestParser(unittest.TestCase):
     ])
     def test_try_parse_or_expr(self, case, expect):
         # GIVEN
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
 
@@ -335,7 +336,7 @@ class TestParser(unittest.TestCase):
     ])
     def test_try_parse_and_expr(self, case, expect):
         # GIVEN
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
 
@@ -352,7 +353,7 @@ class TestParser(unittest.TestCase):
     ])
     def test_try_parse_negate_expr(self, case, expect):
         # GIVEN
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
 
@@ -380,7 +381,7 @@ class TestParser(unittest.TestCase):
     ])
     def test_try_parse_comp_expr(self, case, expect):
         # GIVEN
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
 
@@ -400,7 +401,7 @@ class TestParser(unittest.TestCase):
     ])
     def test_try_parse_sum_expr(self, case, expect):
         # GIVEN
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
 
@@ -422,7 +423,7 @@ class TestParser(unittest.TestCase):
     ])
     def test_try_parse_mul_expr(self, case, expect):
         # GIVEN
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
 
@@ -438,7 +439,7 @@ class TestParser(unittest.TestCase):
     ])
     def test_try_parse_dot_operator(self, case, expect):
         # GIVEN
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
 
@@ -454,7 +455,7 @@ class TestParser(unittest.TestCase):
     ])
     def test_try_parse_fun_call(self, case, expect):
         # GIVEN
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
 
@@ -471,7 +472,7 @@ class TestParser(unittest.TestCase):
     ])
     def test_try_parse_arguments(self, case, expect):
         # GIVEN
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
 
@@ -487,7 +488,7 @@ class TestParser(unittest.TestCase):
     ])
     def test_try_parse_list_element(self, case, expect):
         # GIVEN
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
 
@@ -504,7 +505,7 @@ class TestParser(unittest.TestCase):
     ])
     def test_try_parse_parenthesis(self, case, expect):
         # GIVEN
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
 
@@ -524,7 +525,7 @@ class TestParser(unittest.TestCase):
     ])
     def test_try_parse_list(self, case, expect):
         # GIVEN
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
 
@@ -556,7 +557,7 @@ class TestParser(unittest.TestCase):
     ])
     def test_try_parse_atom(self, case, expect):
         # GIVEN
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
 
@@ -565,6 +566,10 @@ class TestParser(unittest.TestCase):
 
         # THEN
         self.assertEqual(expect, program, f"Atom not parsed: {case}")
+
+
+def get_error_handler():
+    return ErrorHandler(level=logging.CRITICAL)
 
 
 class TestParserErrorHandling(unittest.TestCase):
@@ -607,7 +612,7 @@ class TestParserErrorHandling(unittest.TestCase):
     def test_detect_missing_brackets(self, case, expect):
         # GIVEN
         # error_handler = ErrorHandler(logging.CRITICAL)
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
 
@@ -623,7 +628,7 @@ class TestParserErrorHandling(unittest.TestCase):
     def test_detect_missing_function_body(self, case, expect):
         # GIVEN
         # error_handler = ErrorHandler(logging.CRITICAL)
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
 
@@ -639,7 +644,7 @@ class TestParserErrorHandling(unittest.TestCase):
     def test_detect_function_redefinition(self, case, expect):
         # GIVEN
         # error_handler = ErrorHandler(logging.CRITICAL)
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
 
@@ -657,7 +662,7 @@ class TestParserErrorHandling(unittest.TestCase):
     def test_detect_missing_identifier_after_comma(self, case, expect):
         # GIVEN
         # error_handler = ErrorHandler(logging.CRITICAL)
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
 
@@ -675,7 +680,7 @@ class TestParserErrorHandling(unittest.TestCase):
     def test_detect_missing_expression_after_comma(self, case, expect):
         # GIVEN
         # error_handler = ErrorHandler(logging.CRITICAL)
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
 
@@ -693,7 +698,7 @@ class TestParserErrorHandling(unittest.TestCase):
     def test_detect_missing_expression_after_comma(self, case, expect):
         # GIVEN
         # error_handler = ErrorHandler(logging.CRITICAL)
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
 
@@ -707,7 +712,7 @@ class TestParserErrorHandling(unittest.TestCase):
     def test_detect_missing_expression_after_comma(self, case, expect):
         # GIVEN
         # error_handler = ErrorHandler(logging.CRITICAL)
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
 
@@ -725,7 +730,7 @@ class TestParserErrorHandling(unittest.TestCase):
     def test_detect_missing_condition(self, case, expect):
         # GIVEN
         # error_handler = ErrorHandler(logging.CRITICAL)
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
 
@@ -747,7 +752,7 @@ class TestParserErrorHandling(unittest.TestCase):
     def test_detect_missing_body(self, case, expect):
         # GIVEN
         # error_handler = ErrorHandler(logging.CRITICAL)
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
 
@@ -761,7 +766,7 @@ class TestParserErrorHandling(unittest.TestCase):
     def test_detect_missing_iterator(self, case, expect):
         # GIVEN
         # error_handler = ErrorHandler(logging.CRITICAL)
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
 
@@ -775,7 +780,7 @@ class TestParserErrorHandling(unittest.TestCase):
     def test_detect_missing_in_keyword(self, case, expect):
         # GIVEN
         # error_handler = ErrorHandler(logging.CRITICAL)
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
 
@@ -789,7 +794,7 @@ class TestParserErrorHandling(unittest.TestCase):
     def test_detect_missing_iterable(self, case, expect):
         # GIVEN
         # error_handler = ErrorHandler(logging.CRITICAL)
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
 
@@ -839,7 +844,7 @@ class TestParserErrorHandling(unittest.TestCase):
     def test_detect_missing_right_side_expression(self, case, expect):
         # GIVEN
         # error_handler = ErrorHandler(logging.CRITICAL)
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
 
@@ -853,7 +858,7 @@ class TestParserErrorHandling(unittest.TestCase):
     def test_detect_missing_identifier_after_dot(self, case, expect):
         # GIVEN
         # error_handler = ErrorHandler(logging.CRITICAL)
-        error_handler = ErrorHandler()
+        error_handler = get_error_handler()
         lexer = Lexer(StringIO(case), error_handler)
         parser = Parser(error_handler)
 
@@ -874,7 +879,7 @@ class TestParserClasses(unittest.TestCase):
         (ForStatement(Identifier("a"), Identifier("a"), Block([FunCall(Identifier("print"), List([Integer(2)]))])),),
         (IfStatement(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))]),
                      [ElifBlock(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))]))],
-                     ElseBlock([FunCall(Identifier("print"), List([Integer(2)]))])),),
+                     ElseBlock(Block([FunCall(Identifier("print"), List([Integer(2)]))]))),),
         (ReturnStatement([Identifier("a")]),),
         (Assignment(Identifier("a"), Integer(2)),),
         (Function(Identifier("a"), [Identifier("b")], Block([Assignment(Identifier("a"), Integer(2))])),),
@@ -899,7 +904,7 @@ class TestParserClasses(unittest.TestCase):
         (ForStatement(Identifier("a"), Identifier("a"), Block([FunCall(Identifier("print"), List([Integer(2)]))])),),
         (IfStatement(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))]), []),),
         (ElifBlock(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))])),),
-        (ElseBlock([FunCall(Identifier("print"), List([Integer(2)]))]),),
+        (ElseBlock(Block([FunCall(Identifier("print"), List([Integer(2)]))])),),
         (ReturnStatement([Identifier("a")]),),
         (Assignment(Identifier("a"), Integer(2)),),
         (Function(Identifier("a"), [Identifier("b")], Block([Assignment(Identifier("a"), Integer(2))])),),
@@ -939,17 +944,17 @@ class TestParserClasses(unittest.TestCase):
                      [ElifBlock(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))]))])),
         (IfStatement(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))]), []),
          IfStatement(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))]), [],
-                     ElseBlock([FunCall(Identifier("print"), List([Integer(2)]))]))),
+                     ElseBlock(Block([FunCall(Identifier("print"), List([Integer(2)]))])))),
         (IfStatement(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))]), [],
-                     ElseBlock([FunCall(Identifier("input"), List([String("test")]))])),
+                     ElseBlock(Block([FunCall(Identifier("input"), List([String("test")]))]))),
          IfStatement(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))]), [],
-                     ElseBlock([FunCall(Identifier("print"), List([Integer(2)]))]))),
+                     ElseBlock(Block([FunCall(Identifier("print"), List([Integer(2)]))])))),
         (ElifBlock(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))])),
          ElifBlock(Boolean(False), Block([FunCall(Identifier("print"), List([Integer(2)]))]))),
         (ElifBlock(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))])),
          ElifBlock(Boolean(True), Block([TwoSidedExpression(Identifier("a"), Integer(2))]))),
-        (ElseBlock([FunCall(Identifier("print"), List([Integer(2)]))]),
-         ElseBlock([TwoSidedExpression(Identifier("a"), Integer(2))])),
+        (ElseBlock(Block([FunCall(Identifier("print"), List([Integer(2)]))])),
+         ElseBlock(Block([TwoSidedExpression(Identifier("a"), Integer(2))]))),
         (ReturnStatement([Identifier("a")]),
          ReturnStatement([Identifier("b")])),
         (Assignment(Identifier("a"), Integer(2)),
@@ -971,8 +976,8 @@ class TestParserClasses(unittest.TestCase):
 
 
 def suite():
-    suite = unittest.TestSuite()
-    suite.addTest(unittest.makeSuite(TestParser, 'test'))
-    suite.addTest(unittest.makeSuite(TestParserErrorHandling, 'test'))
-    suite.addTest(unittest.makeSuite(TestParserClasses, 'test'))
-    return suite
+    suite_ = unittest.TestSuite()
+    suite_.addTest(unittest.makeSuite(TestParser, 'test'))
+    suite_.addTest(unittest.makeSuite(TestParserErrorHandling, 'test'))
+    suite_.addTest(unittest.makeSuite(TestParserClasses, 'test'))
+    return suite_

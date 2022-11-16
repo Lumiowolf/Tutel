@@ -3,17 +3,18 @@ import signal
 import sys
 import unittest
 from time import sleep
-from Tests.ParserTests import test_Parser
-from Tests.LexerTests import test_Lexer
+
 from Tests.InterpreterTests import test_Interpreter
+from Tests.LexerTests import test_Lexer
+from Tests.ParserTests import test_Parser
 
 
 def suite():
-    suite = unittest.TestSuite()
-    suite.addTest(test_Parser.suite())
-    suite.addTest(test_Lexer.suite())
-    suite.addTest(test_Interpreter.suite())
-    return suite
+    suite_ = unittest.TestSuite()
+    suite_.addTest(test_Parser.suite())
+    suite_.addTest(test_Lexer.suite())
+    suite_.addTest(test_Interpreter.suite())
+    return suite_
 
 
 def main():
@@ -35,7 +36,6 @@ def _exit(*args):
 
 
 _exit.alreadyExited = False
-
 
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, _exit)

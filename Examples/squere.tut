@@ -2,7 +2,7 @@ sierpinski_square(turtle, rank, length) {
 	if(rank == 0) {
 		for(_ in range(4)) {
 			turtle.forward(length);
-			turtle.turnLeft();
+			turtle.turn_left();
 		}
 		return;
 	}
@@ -13,12 +13,12 @@ sierpinski_square(turtle, rank, length) {
 			sierpinski_square(turtle, rank - 1, length / 3);
 		}
 		turtle.forward(length / 3);
-		turtle.turnLeft();
+		turtle.turn_left();
 	}
 }
 
 main() {
 	turtle = Turtle();
-	turtle.setColor(Color.Yellow);
+	turtle.set_color(Color(255, 255, 0));
 	sierpinski_square(turtle, 5, 300);
 }
