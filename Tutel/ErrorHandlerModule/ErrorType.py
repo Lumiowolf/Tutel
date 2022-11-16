@@ -11,6 +11,18 @@ class TutelException(Exception):
         raise self
 
 
+class FileNotFoundException(TutelException):
+    def __init__(self, file_name: str) -> None:
+        super(FileNotFoundException, self).__init__()
+        self.file_name = file_name
+        self.base_msg = "Runtime error: "
+
+    def __str__(self) -> str:
+        msg = f"file '{self.file_name}' doesn't exist"
+        return msg.encode("unicode-escape").decode()
+
+
+
 class Exit(TutelException):
     pass
 
