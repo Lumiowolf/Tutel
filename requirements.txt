@@ -1,5 +1,2 @@
 parameterized~=0.8.1
-PyQt6
-PySide6
-pyqtdarktheme
 numpy
