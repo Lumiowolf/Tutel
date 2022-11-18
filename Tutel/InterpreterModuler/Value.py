@@ -1,3 +1,8 @@
+from typing import Generic, TypeVar
+
+T = TypeVar("T")
+
+
 class ValueIterator:
     def __init__(self, obj: "Value"):
         self._value_obj = obj
@@ -13,9 +18,9 @@ class ValueIterator:
         raise StopIteration
 
 
-class Value:
-    def __init__(self, value) -> None:
-        self.value = value
+class Value(Generic[T]):
+    def __init__(self, value: T) -> None:
+        self.value: T = value
 
     def append(self, val) -> None:
         self.value.append(val)
