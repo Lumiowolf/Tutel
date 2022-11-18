@@ -468,7 +468,7 @@ class Parser:
             self.lexer.get_next_token()
             at_least_one = True
 
-        if not (expr := self.try_parse_atom()):
+        if not (expr := self.try_parse_atom_complex()):
             if at_least_one:
                 self.error_handler.handle_error(
                     ExprMissingRightSideException(self.try_parse_mul_expr.__name__, self.lexer.token))
@@ -479,25 +479,30 @@ class Parser:
 
         return expr
 
-    def try_parse_atom(self) -> Expression | None:
-        position = self._get_position()
-        if expr := self.try_parse_identifier():
+    def try_parse_atom_complex(self) -> Expression | None:
+        if expr := self.try_parse_atom():
             while new_expr := self.try_parse_complex(expr):
                 expr = new_expr
 
             return expr
 
-        if expr := self.try_parse_parenthesis():
+    def try_parse_atom(self) -> Expression | None:
+        position = self._get_position()
+
+        if (expr := self.try_parse_identifier()) is not None:
             return expr
 
-        if expr := self.try_parse_list():
+        if (expr := self.try_parse_parenthesis()) is not None:
             return expr
 
-        if string := self._check_and_return(TokenType.T_TEXT_CONST):
+        if (expr := self.try_parse_list()) is not None:
+            return expr
+
+        if (string := self._check_and_return(TokenType.T_TEXT_CONST)) is not None:
             return String(string, position)
 
-        if self._token_is(TokenType.T_NUMBER):
-            return Integer(self._check_and_return(TokenType.T_NUMBER), position)
+        if (number := self._check_and_return(TokenType.T_NUMBER)) is not None:
+            return Integer(number, position)
 
         if self._token_is(TokenType.T_TRUE):
             self.lexer.get_next_token()

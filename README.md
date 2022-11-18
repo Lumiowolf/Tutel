@@ -119,11 +119,11 @@ mulOperator         = "*"
 mulExpr             = {sign}, atom;
 sign                = "+"
                     | "-";
-atom                = identifier, {complex}
+atomComplex         = atom, {complex};
+atom                = identifier
                     | parenthesis
                     | list
-                    | number
-                    | string;
+                    | literal;
 complex             = dotOperator
                     | funCall
                     | listElement;
