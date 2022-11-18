@@ -8,7 +8,7 @@ from Tutel.ErrorHandlerModule.ErrorType import LexerException, ParserException, 
     BuiltinFunctionShadowException, TypeException
 from Tutel.ErrorHandlerModule.ErrorType import NotIterableException, CannotAssignException, NotDefinedException, \
     UnsupportedOperandException, BadOperandForUnaryException, AttributeException
-from Tutel.InterpreterModuler.TutelBuiltins import GLOBAL_FUNCTIONS
+from Tutel.InterpreterModuler import TutelBuiltins
 from Tutel.InterpreterModuler.Value import Value
 from Tutel.LexerModule.Lexer import Lexer
 from Tutel.ParserModule import Classes
@@ -21,9 +21,10 @@ class Interpreter:
         self.error_handler = error_handler_
         self.program_to_execute = None
         self.start_with_fun = None
-        self.program_context: list[list[dict[str, Value]]] = []
+        self.builtins = TutelBuiltins
         self.program_globals: dict[str, any] = {}
-        self._prepare_globals()
+        self.program_context: list[list[dict[str, Value]]] = []
+        # self._prepare_globals()
         self.return_flag = False
         self.last_returned = None
         self.do_else = True
@@ -62,8 +63,8 @@ class Interpreter:
     def _drop_function_context(self):
         self.program_context = self.program_context[:-1]
 
-    def _prepare_globals(self):
-        self.program_globals.update(**GLOBAL_FUNCTIONS)
+    # def _prepare_globals(self):
+    #     self.program_globals.update(**GLOBAL_FUNCTIONS)
 
     def _add_functions_to_globals(self, program_: Classes.Program):
         for fun_name in program_.functions:
@@ -86,14 +87,24 @@ class Interpreter:
         for i in range(len(self.program_context[-1]) - 1, -1, -1):
             if (val := self.program_context[-1][i].get(var_name)) is not None:
                 return val
-        if (val := self.program_globals.get(var_name)) is not None:
-            return val
+        # if (val := self.program_globals.get(var_name)) is not None:
+        #     return val
         return None
+
+    def _get_buildin_global_or_local_var(self, name: str) -> Callable | Classes.Function | Value | None:
+        try:
+            return getattr(self.builtins, name)
+        except AttributeError:
+            pass
+        if (global_ := self.program_globals.get(name)) is not None:
+            return global_
+        if (local := self._get_local_var(name)) is not None:
+            return local
 
     def _get_value_or_variable(self, obj) -> Value | Callable | Classes.Function | None:
         if type(obj) == Classes.Identifier:
             identifier = obj.accept(self)
-            if (value := self._get_local_var(identifier)) is None:
+            if (value := self._get_buildin_global_or_local_var(identifier)) is None:
                 self.error_handler.handle_error(NotDefinedException(name=identifier))
         else:
             value = obj.accept(self)
@@ -146,7 +157,7 @@ class Interpreter:
         return identifier.value
 
     def visit_list(self, list_: Classes.List):
-        return Value([el.accept(self) for el in list_.value])
+        return Value([self._get_value_or_variable(el) for el in list_.value])
 
     def visit_if_statement(self, if_stmt: Classes.IfStatement):
         self.do_else = True
@@ -302,19 +313,23 @@ class Interpreter:
                 self.error_handler.handle_error(TypeException(err))
         else:
             try:
-                return Value(function(*[arg.value for arg in arguments]))
-            except TypeError:
-                args_spec = inspect.getfullargspec(function)
+                result = function(*[arg.value for arg in arguments])
+                if type(result) != Value:
+                    result = Value(result)
+                return result
+            except TypeError as e:
+                # args_spec = inspect.getfullargspec(function)
                 self.error_handler.handle_error(
-                    MismatchedArgsCountException(
-                        fun_name=function.__name__,
-                        got_number=len(arguments),
-                        expected_min=len(args_spec.args) - len(args_spec.defaults if args_spec.defaults else []),
-                        expected_max=len(args_spec.args)
-                    )
+                    TypeException(e)
+                    # MismatchedArgsCountException(
+                    #     fun_name=function.__name__,
+                    #     got_number=len(arguments),
+                    #     expected_min=len(args_spec.args) - len(args_spec.defaults if args_spec.defaults else []),
+                    #     expected_max=len(args_spec.args)
+                    # )
                 )
-            except Exception as err:
-                self.error_handler.handle_error(UnknownException(err))
+            # except Exception as err:
+            #     self.error_handler.handle_error(UnknownException(err))
 
     def visit_list_element(self, list_el: Classes.ListElement):
         list_ = self._get_value_or_variable(list_el.left_expr)
@@ -344,7 +359,7 @@ if __name__ == '__main__':
     from Tutel.InterpreterModuler.Turtle.Turtle import Turtle
     from Tutel.GuiModule.GuiMock import GuiMock
 
-    Turtle.set_gui(GuiMock())
+    Turtle.set_gui(GuiMock(False))
     try:
         interpreter.execute(program, "main")
     except InterpreterException as e:

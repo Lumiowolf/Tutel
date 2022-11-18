@@ -1,52 +1,48 @@
 import time
+import builtins
 
 from Tutel.InterpreterModuler.Turtle.Color import Color
 from Tutel.InterpreterModuler.Turtle.Position import Position
 from Tutel.InterpreterModuler.Turtle.Turtle import Turtle
+from Tutel.InterpreterModuler.Value import Value
 
 
-def print_(*args):
-    print(*args)
+def print(*args) -> None:
+    builtins.print(*args)
 
 
-def sleep_(sec: int):
+def sleep(sec: int) -> None:
     time.sleep(sec)
 
 
-def type_(*args):
-    return type(*args).__name__
+def type(*args) -> Value[str]:
+    return Value(builtins.type(*args).__name__)
 
 
-def int_(*args):
-    return int(*args)
+def hex(number) -> Value[str]:
+    return Value(builtins.hex(number))
 
 
-def str_(*args):
-    return str(*args)
+def range(*args) -> Value[range]:
+    return Value(builtins.range(*args))
 
 
-def hex_(*args):
-    return hex(*args)
+def len(obj) -> Value[int]:
+    return Value(builtins.len(obj))
 
 
-def range_(*args):
-    return range(*args)
+def pow(exp: int, mod: int) -> Value[int]:
+    return Value(builtins.pow(exp, mod))
 
 
-def len_(*args):
-    return len(*args)
+def str(*args):
+    return builtins.str(*args)
 
 
-GLOBAL_FUNCTIONS = {
-    "print": print_,
-    "sleep": sleep_,
-    "type": type_,
-    "int": int_,
-    "str": str_,
-    "hex": hex_,
-    "range": range_,
-    "len": len_,
-    "Turtle": Turtle.turtle_init,
-    "Color": Color,
-    "Position": Position,
-}
+def int(*args) -> Value[int]:
+    return Value(builtins.int(*args))
+
+
+Turtle = Turtle
+Color = Color
+Position = Position

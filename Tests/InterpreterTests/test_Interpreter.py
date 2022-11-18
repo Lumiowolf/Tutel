@@ -7,7 +7,7 @@ from parameterized import parameterized
 from Tutel.ErrorHandlerModule.ErrorHandler import ErrorHandler
 from Tutel.ErrorHandlerModule.ErrorType import InterpreterException, NothingToRunException, RecursionException, \
     NotDefinedException, NotIterableException, CannotAssignException, UnsupportedOperandException, \
-    BadOperandForUnaryException, AttributeException, MismatchedArgsCountException, OutOfRangeException
+    BadOperandForUnaryException, AttributeException, MismatchedArgsCountException, OutOfRangeException, TypeException
 from Tutel.GuiModule.GuiMock import GuiMock
 from Tutel.InterpreterModuler.Interpreter import Interpreter
 from Tutel.InterpreterModuler.Turtle.Turtle import Turtle
@@ -112,6 +112,9 @@ class TestInterpreter(unittest.TestCase):
         ("foo(){x = 1;x = boo(x);}boo(a){return a + 1;}",),
         ("foo(){x = 1;x = boo(x);}boo(a){return a + 1, 2;}",),
         ("foo(){a = [1, 2];b = a[0];}",),
+        ("foo(){[print][0]('a');}",),
+        ("foo(){a = [1, 2][0];}",),
+        ("foo(){a = 'abc'[0];}",),
     ])
     def test_basic(self, case):
         # GIVEN
@@ -169,7 +172,7 @@ class TestInterpreter(unittest.TestCase):
         ("foo(){boo(1);}boo(){}", MismatchedArgsCountException),
         ("foo(){boo();}boo(a){}", MismatchedArgsCountException),
         ("foo(){slee();}", NotDefinedException),
-        ("foo(){sleep(1, 2);}", MismatchedArgsCountException),
+        ("foo(){sleep(1, 2);}", TypeException),
         ("foo(){a = [1, 2]; a[2];}", OutOfRangeException),
     ])
     def test_exceptions(self, case, exception):

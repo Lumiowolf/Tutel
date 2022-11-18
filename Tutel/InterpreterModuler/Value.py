@@ -25,8 +25,11 @@ class Value(Generic[T]):
     def append(self, val) -> None:
         self.value.append(val)
 
+    def __call__(self, *args, **kwargs):
+        return self.value(*args, **kwargs)
+
     def __getitem__(self, item):
-        return self.value[item]
+        return self.value[item] if type(self.value[item]) == Value else Value(self.value[item])
 
     def __getattr__(self, item):
         return getattr(self.value, item)
