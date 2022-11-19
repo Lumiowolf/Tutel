@@ -1,5 +1,5 @@
-from Tutel.ErrorHandlerModule.ErrorHandler import ErrorHandler
-from Tutel.ErrorHandlerModule.ErrorType import (
+from tutel.ErrorHandlerModule.ErrorHandler import ErrorHandler
+from tutel.ErrorHandlerModule.ErrorType import (
     MissingLeftBracketException,
     MissingRightBracketException,
     MissingIdentifierAfterCommaException,
@@ -18,9 +18,9 @@ from Tutel.ErrorHandlerModule.ErrorType import (
     MissingFunctionBlockException,
     FunctionRedefinitionException,
 )
-from Tutel.LexerModule.Lexer import Lexer
-from Tutel.LexerModule.Tokens import TokenType, Token, TOKEN_VALUE_TYPES
-from Tutel.ParserModule.Classes import (
+from tutel.LexerModule.Lexer import Lexer
+from tutel.LexerModule.Tokens import TokenType, Token, TOKEN_VALUE_TYPES
+from tutel.ParserModule.Classes import (
     Program, Function, Block,
     Identifier,
     Statement,
@@ -33,7 +33,7 @@ from Tutel.ParserModule.Classes import (
     OrExpr, AndExpr, Negate,
     DotOperator, FunCall, ListElement, List, String, Integer, Boolean, Null, InvertExpr,
 )
-from Tutel.ParserModule.Remapper import assignment_mapper, comp_mapper, sum_mapper, mul_mapper
+from tutel.ParserModule.Remapper import assignment_mapper, comp_mapper, sum_mapper, mul_mapper
 
 
 class LexerInterface:
@@ -55,7 +55,7 @@ class LexerInterface:
 
 
 class Parser:
-    def __init__(self, error_handler: ErrorHandler) -> None:
+    def __init__(self, error_handler: ErrorHandler = ErrorHandler(module="parser")) -> None:
         self.lexer = None
         self.functions: dict[str, Function] = {}
         self.error_handler = error_handler

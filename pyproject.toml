@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "tutel"
+version = "1.0.5"
+authors = [
+  { name="Bartosz Sosnowski", email="bartosz.sosnowski.pro@gmail.com" },
+]
+description = "An interpreter of Tutel language"
+readme = "README.md"
+requires-python = ">=3.10"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "numpy~=1.23.4"
+]
+
+[project.urls]
+"Homepage" = "https://github.com/Lumiowolf/Tutel"
+"Bug Tracker" = "https://github.com/Lumiowolf/Tutel/issues"

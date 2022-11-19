@@ -1,5 +1,5 @@
-from Tutel.LexerModule.Tokens import TokenType
-from Tutel.ParserModule.Classes import EqExpr, NotEqExpr, LessExpr, GreaterExpr, LessEqExpr, GreaterEqExpr, InExpr, \
+from tutel.LexerModule.Tokens import TokenType
+from tutel.ParserModule.Classes import EqExpr, NotEqExpr, LessExpr, GreaterExpr, LessEqExpr, GreaterEqExpr, InExpr, \
     AddExpr, \
     SubExpr, BasicAssignment, AddAssignment, SubAssignment, MulAssignment, DivAssignment, ModAssignment, MulExpr, \
     DivExpr, ModExpr, IntDivExpr

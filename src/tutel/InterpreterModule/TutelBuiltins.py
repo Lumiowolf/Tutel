@@ -1,14 +1,18 @@
 import time
 import builtins
 
-from Tutel.InterpreterModuler.Turtle.Color import Color
-from Tutel.InterpreterModuler.Turtle.Position import Position
-from Tutel.InterpreterModuler.Turtle.Turtle import Turtle
-from Tutel.InterpreterModuler.Value import Value
+from tutel.InterpreterModule.Turtle.Color import Color
+from tutel.InterpreterModule.Turtle.Position import Position
+from tutel.InterpreterModule.Turtle.Turtle import Turtle
+from tutel.InterpreterModule.Value import Value
 
 
 def print(*args) -> None:
     builtins.print(*args)
+
+
+def input(prompt) -> str:
+    return builtins.input(prompt)
 
 
 def sleep(sec: int) -> None:
@@ -43,6 +47,6 @@ def int(*args) -> Value[int]:
     return Value(builtins.int(*args))
 
 
-Turtle = Turtle
+Turtle = Turtle.turtle_init
 Color = Color
 Position = Position

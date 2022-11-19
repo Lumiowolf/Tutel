@@ -4,9 +4,9 @@ import sys
 import unittest
 from time import sleep
 
-from Tests.InterpreterTests import test_Interpreter
-from Tests.LexerTests import test_Lexer
-from Tests.ParserTests import test_Parser
+from tests.InterpreterTests import test_Interpreter
+from tests.LexerTests import test_Lexer
+from tests.ParserTests import test_Parser
 
 
 def suite():

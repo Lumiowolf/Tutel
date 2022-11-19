@@ -4,22 +4,22 @@ from io import StringIO
 
 from parameterized import parameterized
 
-from Tutel.ErrorHandlerModule.ErrorHandler import ErrorHandler
-from Tutel.ErrorHandlerModule.ErrorType import MissingLeftBracketException, MissingRightBracketException, \
+from tutel.ErrorHandlerModule.ErrorHandler import ErrorHandler
+from tutel.ErrorHandlerModule.ErrorType import MissingLeftBracketException, MissingRightBracketException, \
     MissingRightCurlyBracketException, MissingRightSquareBracketException, MissingFunctionBlockException, \
     FunctionRedefinitionException, MissingIdentifierAfterCommaException, MissingExpressionAfterCommaException, \
     MissingSemicolonException, MissingRightSideOfAssignmentException, MissingConditionException, MissingBodyException, \
     MissingIteratorException, MissingIterableException, MissingKeywordInException, ExprMissingRightSideException, \
     MissingIdentifierAfterDotException
-from Tutel.LexerModule.Lexer import Lexer
-from Tutel.ParserModule.Classes import (
+from tutel.LexerModule.Lexer import Lexer
+from tutel.ParserModule.Classes import (
     Program, Function, Identifier, BasicAssignment, Integer, AddAssignment, SubAssignment,
     MulAssignment, DivAssignment, ModAssignment, ReturnStatement, AddExpr, SubExpr, IfStatement, GreaterExpr, ElifBlock,
     AndExpr, OrExpr, ElseBlock, FunCall, ForStatement, WhileStatement, MulExpr, EqExpr, NotEqExpr,
     LessExpr, GreaterEqExpr, LessEqExpr, InExpr, DivExpr, ModExpr, IntDivExpr, DotOperator, ListElement, List, String,
     Boolean, Null, Negate, TwoSidedExpression, Assignment, Atom, Block, InvertExpr
 )
-from Tutel.ParserModule.Parser import Parser
+from tutel.ParserModule.Parser import Parser
 
 
 class TestParser(unittest.TestCase):
@@ -569,7 +569,7 @@ class TestParser(unittest.TestCase):
 
 
 def get_error_handler():
-    return ErrorHandler(level=logging.CRITICAL)
+    return ErrorHandler(module="test_parser", level=logging.CRITICAL)
 
 
 class TestParserErrorHandling(unittest.TestCase):

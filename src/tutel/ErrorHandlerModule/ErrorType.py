@@ -1,9 +1,5 @@
-from Tutel.LexerModule.Tokens import Token
-
-MAX_IDENTIFIER_LENGTH = 64
-MAX_TEXT_CONST_LENGTH = 1024
-MAX_COMMENT_LENGTH = 1024
-MAX_INTEGER = 2147483647
+from tutel.LexerModule.Constants import MAX_IDENTIFIER_LENGTH, MAX_TEXT_CONST_LENGTH, MAX_COMMENT_LENGTH, MAX_INTEGER
+from tutel.LexerModule.Tokens import Token
 
 
 class TutelException(Exception):

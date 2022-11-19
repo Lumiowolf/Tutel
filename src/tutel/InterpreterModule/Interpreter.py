@@ -1,22 +1,27 @@
-import inspect
 import operator
 from typing import Callable
 
-from Tutel.ErrorHandlerModule.ErrorHandler import ErrorHandler
-from Tutel.ErrorHandlerModule.ErrorType import LexerException, ParserException, InterpreterException, \
-    MismatchedArgsCountException, OutOfRangeException, UnknownException, NothingToRunException, RecursionException, \
+from tutel.ErrorHandlerModule.ErrorHandler import ErrorHandler
+from tutel.ErrorHandlerModule.ErrorType import LexerException, ParserException, InterpreterException, \
+    MismatchedArgsCountException, OutOfRangeException, NothingToRunException, RecursionException, \
     BuiltinFunctionShadowException, TypeException
-from Tutel.ErrorHandlerModule.ErrorType import NotIterableException, CannotAssignException, NotDefinedException, \
+from tutel.ErrorHandlerModule.ErrorType import NotIterableException, CannotAssignException, NotDefinedException, \
     UnsupportedOperandException, BadOperandForUnaryException, AttributeException
-from Tutel.InterpreterModuler import TutelBuiltins
-from Tutel.InterpreterModuler.Value import Value
-from Tutel.LexerModule.Lexer import Lexer
-from Tutel.ParserModule import Classes
-from Tutel.ParserModule.Parser import Parser
+from tutel.GuiModule.GuiInterface import GuiInterface
+from tutel.InterpreterModule import TutelBuiltins
+from tutel.InterpreterModule.Value import Value
+from tutel.LexerModule.Lexer import Lexer
+from tutel.ParserModule import Classes
+from tutel.ParserModule.Parser import Parser
+from tutel.InterpreterModule.Turtle.Turtle import Turtle
+
+
+def set_gui(gui: GuiInterface):
+    Turtle.set_gui(gui)
 
 
 class Interpreter:
-    def __init__(self, error_handler_: ErrorHandler) -> None:
+    def __init__(self, error_handler_: ErrorHandler = ErrorHandler(module="interpreter")) -> None:
         self.is_running = False
         self.error_handler = error_handler_
         self.program_to_execute = None
@@ -194,7 +199,7 @@ class Interpreter:
                 if self.return_flag:
                     break
         except TypeError:
-            self.error_handler.handle_error(NotIterableException(type_name=type(iterable.value)))
+            self.error_handler.handle_error(NotIterableException(type_name=type(iterable.value).__name__))
         self._drop_context()
 
     def visit_while_statement(self, while_stmt: Classes.WhileStatement):
@@ -256,7 +261,7 @@ class Interpreter:
             result = operators[expr.operator](value)
         except TypeError:
             self.error_handler.handle_error(
-                BadOperandForUnaryException(type_name=type(value)))
+                BadOperandForUnaryException(type_name=type(value).__name__))
         return result
 
     def visit_two_sided_expression(self, expr: Classes.TwoSidedExpression):
@@ -340,27 +345,3 @@ class Interpreter:
         except IndexError:
             self.error_handler.handle_error(OutOfRangeException())
         return result
-
-
-if __name__ == '__main__':
-    error_handler = ErrorHandler()
-    with open("../../Examples/example_5.tut", "r") as file:
-        try:
-            lexer = Lexer(file, error_handler)
-        except LexerException as e:
-            exit(-1)
-        parser = Parser(error_handler)
-        try:
-            program = parser.parse(lexer)
-        except ParserException as e:
-            exit(-2)
-
-    interpreter = Interpreter(error_handler)
-    from Tutel.InterpreterModuler.Turtle.Turtle import Turtle
-    from Tutel.GuiModule.GuiMock import GuiMock
-
-    Turtle.set_gui(GuiMock(False))
-    try:
-        interpreter.execute(program, "main")
-    except InterpreterException as e:
-        exit(-3)

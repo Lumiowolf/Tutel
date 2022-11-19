@@ -1,9 +1,9 @@
 import numpy as np
 
-from Tutel.GuiModule.GuiInterface import GuiInterface
-from Tutel.GuiModule.GuiMock import GuiMock
-from Tutel.InterpreterModuler.Turtle.Color import Color
-from Tutel.InterpreterModuler.Turtle.Position import Position
+from tutel.GuiModule.GuiInterface import GuiInterface
+from tutel.GuiModule.GuiMock import GuiMock
+from tutel.InterpreterModule.Turtle.Color import Color
+from tutel.InterpreterModule.Turtle.Position import Position
 
 
 class Turtle:

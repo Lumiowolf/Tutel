@@ -1,7 +1,9 @@
 from typing import TextIO
 
-from Tutel.ErrorHandlerModule.ErrorHandler import ErrorHandler
-from Tutel.ErrorHandlerModule.ErrorType import (
+from \
+    tutel.ErrorHandlerModule.ErrorHandler import ErrorHandler
+from \
+    tutel.ErrorHandlerModule.ErrorType import (
     UnknownTokenLexerException,
     CommentTooLongLexerException,
     IdentifierTooLongLexerException,
@@ -10,17 +12,16 @@ from Tutel.ErrorHandlerModule.ErrorType import (
     UnknownEscapingLexerException,
     LeadingZerosInIntegerLexerException,
     IntegerTooLargeLexerException,
-    MAX_IDENTIFIER_LENGTH,
-    MAX_TEXT_CONST_LENGTH,
-    MAX_COMMENT_LENGTH,
-    MAX_INTEGER,
 )
-from Tutel.LexerModule.Source import Source
-from Tutel.LexerModule.Tokens import Token, TokenType, operator_parts, operators, escaped_chars, keywords
+from tutel.LexerModule.Constants import MAX_IDENTIFIER_LENGTH, MAX_TEXT_CONST_LENGTH, MAX_COMMENT_LENGTH, MAX_INTEGER
+from \
+    tutel.LexerModule.Source import Source
+from \
+    tutel.LexerModule.Tokens import Token, TokenType, operator_parts, operators, escaped_chars, keywords
 
 
 class Lexer:
-    def __init__(self, source: TextIO, error_handler: ErrorHandler):
+    def __init__(self, source: TextIO, error_handler: ErrorHandler = ErrorHandler(module="lexer")):
         self.starting_at_line = None
         self.starting_at_column = None
         self._error_handler = error_handler

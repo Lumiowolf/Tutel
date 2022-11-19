@@ -4,14 +4,14 @@ from io import StringIO
 
 from parameterized import parameterized
 
-from Tutel.ErrorHandlerModule.ErrorHandler import ErrorHandler
-from Tutel.ErrorHandlerModule.ErrorType import IdentifierTooLongLexerException, TextConstTooLongLexerException, \
+from tutel.ErrorHandlerModule.ErrorHandler import ErrorHandler
+from tutel.ErrorHandlerModule.ErrorType import IdentifierTooLongLexerException, TextConstTooLongLexerException, \
     CommentTooLongLexerException, \
-    UnknownTokenLexerException, UnterminatedStringLexerException, MAX_COMMENT_LENGTH, MAX_IDENTIFIER_LENGTH, \
-    IntegerTooLargeLexerException, \
-    MAX_TEXT_CONST_LENGTH, LeadingZerosInIntegerLexerException, UnknownEscapingLexerException
-from Tutel.LexerModule.Lexer import Lexer, Token
-from Tutel.LexerModule.Tokens import operators, TokenType, keywords
+    UnknownTokenLexerException, UnterminatedStringLexerException, IntegerTooLargeLexerException, \
+    LeadingZerosInIntegerLexerException, UnknownEscapingLexerException
+from tutel.LexerModule.Constants import MAX_IDENTIFIER_LENGTH, MAX_TEXT_CONST_LENGTH, MAX_COMMENT_LENGTH
+from tutel.LexerModule.Lexer import Lexer, Token
+from tutel.LexerModule.Tokens import operators, TokenType, keywords
 
 
 class TestLexerSimple(unittest.TestCase):
@@ -266,7 +266,7 @@ class TestLexerComplexer(unittest.TestCase):
 
 
 def get_error_handler():
-    return ErrorHandler(logging.CRITICAL)
+    return ErrorHandler(module="test_lexer", level=logging.CRITICAL)
 
 
 class TestLexerErrorHandling(unittest.TestCase):

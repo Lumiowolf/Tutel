@@ -4,24 +4,24 @@ from io import StringIO
 
 from parameterized import parameterized
 
-from Tutel.ErrorHandlerModule.ErrorHandler import ErrorHandler
-from Tutel.ErrorHandlerModule.ErrorType import InterpreterException, NothingToRunException, RecursionException, \
+from tutel.ErrorHandlerModule.ErrorHandler import ErrorHandler
+from tutel.ErrorHandlerModule.ErrorType import InterpreterException, NothingToRunException, RecursionException, \
     NotDefinedException, NotIterableException, CannotAssignException, UnsupportedOperandException, \
     BadOperandForUnaryException, AttributeException, MismatchedArgsCountException, OutOfRangeException, TypeException
-from Tutel.GuiModule.GuiMock import GuiMock
-from Tutel.InterpreterModuler.Interpreter import Interpreter
-from Tutel.InterpreterModuler.Turtle.Turtle import Turtle
-from Tutel.LexerModule.Lexer import Lexer
-from Tutel.ParserModule.Parser import Parser
+from tutel.GuiModule.GuiMock import GuiMock
+from tutel.InterpreterModule.Interpreter import Interpreter
+from tutel.LexerModule.Lexer import Lexer
+from tutel.ParserModule.Parser import Parser
 
 
 def get_error_handler():
-    return ErrorHandler(level=logging.CRITICAL)
+    return ErrorHandler(module="test_interpreter", level=logging.CRITICAL)
 
 
 class TestInterpreter(unittest.TestCase):
     # def setUp(self) -> None:
-    #     Turtle.set_gui(GuiMock())
+    #     from tutel.InterpreterModule.Interpreter import set_gui
+    #     set_gui(GuiMock(verbose=True))
 
     @parameterized.expand([
         ("foo(){a = 1;}",),
