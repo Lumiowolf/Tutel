@@ -3,6 +3,7 @@ import numpy as np
 from tutel.GuiModule.GuiInterface import GuiInterface
 from tutel.GuiModule.GuiMock import GuiMock
 from tutel.InterpreterModule.Turtle.Color import Color
+from tutel.InterpreterModule.Turtle.Orientation import Orientation
 from tutel.InterpreterModule.Turtle.Position import Position
 
 
@@ -12,8 +13,8 @@ class Turtle:
 
     def __init__(self):
         self.__color = Color(255, 0, 0)
-        self.__position = Position(1, 1)
-        self.__orientation = 0
+        self.__position = Position(0, 0)
+        self.__orientation = Orientation(0)
         self.__init_state = True
         self.id = Turtle.id
         Turtle.id += 1
@@ -52,37 +53,40 @@ class Turtle:
 
     @position.setter
     def position(self, position: Position):
-        if position is not None:
-            if self.gui.set_position(self.id, position):
-                self.__position = position
+        self.__position = position
 
     def set_position(self, position: Position):
-        self.position = position
+        if position is not None:
+            if self.gui.set_position(self.id, position):
+                self.position = position
 
     @property
-    def orientation(self) -> int:
+    def orientation(self) -> Orientation:
         return self.__orientation
 
     @orientation.setter
-    def orientation(self, orientation: int):
+    def orientation(self, orientation: Orientation):
         if orientation is not None:
-            orientation = int(np.mod(orientation, 360))
+            orientation = Orientation(int(np.mod(orientation.angle, 360)))
             if self.gui.set_orientation(self.id, orientation):
                 self.__orientation = orientation
 
     def set_orientation(self, orientation: int):
-        self.orientation = orientation
+        self.orientation = Orientation(orientation)
 
     def turn_left(self):
-        self.orientation = self.orientation + 90
+        self.set_orientation(self.orientation.angle + 90)
 
     def turn_right(self):
-        self.orientation = self.orientation - 90
+        self.set_orientation(self.orientation.angle - 90)
 
-    def forward(self, a):
+    def forward(self, a: int):
         if self.__init_state:
             self.__init_state = False
-        self.position = Position(
-            x=self.position.x + np.sin((self.orientation / 360) * 2 * np.pi) * a,
-            y=self.position.y + np.cos((self.orientation / 360) * 2 * np.pi) * a
-        )
+        if a is not None:
+            new_position = Position(
+                x=self.position.x + np.sin((self.orientation.angle / 360) * 2 * np.pi) * a,
+                y=self.position.y + np.cos((self.orientation.angle / 360) * 2 * np.pi) * a
+            )
+            if self.gui.go_forward(self.id, new_position):
+                self.position = new_position

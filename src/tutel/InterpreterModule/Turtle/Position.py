@@ -11,5 +11,9 @@ class Position:
     def y(self):
         return self.__y
 
+    def __iter__(self):
+        for el in [self.x, self.y]:
+            yield el
+
     def __str__(self) -> str:
         return f"(X: {self.x}, Y: {self.y})"

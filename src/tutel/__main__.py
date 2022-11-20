@@ -4,7 +4,6 @@ import os
 import signal
 import sys
 from time import sleep
-from typing import Literal
 
 from tutel.ErrorHandlerModule.ErrorType import LexerException, ParserException, InterpreterException
 from tutel.InterpreterModule.Interpreter import Interpreter, set_gui
@@ -34,7 +33,8 @@ def get_arg_parser():
 def main(filename: str | None = None, flags: tuple[str] = None):
     if filename:
         sys.argv.append(filename)
-    sys.argv += flags
+    if flags:
+        sys.argv += flags
     arg_parser = get_arg_parser()
     args = arg_parser.parse_args()
 
@@ -54,7 +54,7 @@ def main(filename: str | None = None, flags: tuple[str] = None):
     interpreter = Interpreter()
     from tutel.GuiModule.GuiMock import GuiMock
 
-    set_gui(GuiMock(verbose=args.verbose))
+    set_gui(GuiMock(verbose=True))
     try:
         interpreter.execute(program, "main")
     except InterpreterException as e:

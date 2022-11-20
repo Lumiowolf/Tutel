@@ -92,11 +92,9 @@ class Interpreter:
         for i in range(len(self.program_context[-1]) - 1, -1, -1):
             if (val := self.program_context[-1][i].get(var_name)) is not None:
                 return val
-        # if (val := self.program_globals.get(var_name)) is not None:
-        #     return val
         return None
 
-    def _get_buildin_global_or_local_var(self, name: str) -> Callable | Classes.Function | Value | None:
+    def _get_builtin_global_or_local_var(self, name: str) -> Callable | Classes.Function | Value | None:
         try:
             return getattr(self.builtins, name)
         except AttributeError:
@@ -109,7 +107,7 @@ class Interpreter:
     def _get_value_or_variable(self, obj) -> Value | Callable | Classes.Function | None:
         if type(obj) == Classes.Identifier:
             identifier = obj.accept(self)
-            if (value := self._get_buildin_global_or_local_var(identifier)) is None:
+            if (value := self._get_builtin_global_or_local_var(identifier)) is None:
                 self.error_handler.handle_error(NotDefinedException(name=identifier))
         else:
             value = obj.accept(self)
@@ -323,15 +321,8 @@ class Interpreter:
                     result = Value(result)
                 return result
             except TypeError as e:
-                # args_spec = inspect.getfullargspec(function)
                 self.error_handler.handle_error(
                     TypeException(e)
-                    # MismatchedArgsCountException(
-                    #     fun_name=function.__name__,
-                    #     got_number=len(arguments),
-                    #     expected_min=len(args_spec.args) - len(args_spec.defaults if args_spec.defaults else []),
-                    #     expected_max=len(args_spec.args)
-                    # )
                 )
             # except Exception as err:
             #     self.error_handler.handle_error(UnknownException(err))

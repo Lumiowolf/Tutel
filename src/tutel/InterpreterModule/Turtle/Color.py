@@ -16,5 +16,9 @@ class Color:
     def b(self):
         return self.__b
 
+    def __iter__(self):
+        for el in [self.r, self.g, self.b]:
+            yield el
+
     def __str__(self) -> str:
         return f"(R: {self.r}, G: {self.g}, B: {self.b})"
