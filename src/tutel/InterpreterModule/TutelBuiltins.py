@@ -27,6 +27,18 @@ def hex(number) -> Value[str]:
     return Value(builtins.hex(number))
 
 
+def min(*args) -> Value:
+    return Value(builtins.min(args))
+
+
+def max(*args) -> Value:
+    return Value(builtins.max(args))
+
+
+def abs(number: Value) -> Value:
+    return Value(builtins.abs(number))
+
+
 def range(*args) -> Value[range]:
     return Value(builtins.range(*args))
 

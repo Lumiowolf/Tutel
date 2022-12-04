@@ -108,3 +108,6 @@ class Value(Generic[T]):
 
     def __int__(self) -> int:
         return int(self.value)
+
+    def __abs__(self) -> int:
+        return abs(self.value)
