@@ -2,22 +2,24 @@ import operator
 from typing import Callable
 
 from tutel.ErrorHandlerModule.ErrorHandler import ErrorHandler
-from tutel.ErrorHandlerModule.ErrorType import LexerException, ParserException, InterpreterException, \
-    MismatchedArgsCountException, OutOfRangeException, NothingToRunException, RecursionException, \
+from tutel.ErrorHandlerModule.ErrorType import MismatchedArgsCountException, OutOfRangeException, NothingToRunException, \
+    RecursionException, \
     BuiltinFunctionShadowException, TypeException
 from tutel.ErrorHandlerModule.ErrorType import NotIterableException, CannotAssignException, NotDefinedException, \
     UnsupportedOperandException, BadOperandForUnaryException, AttributeException
 from tutel.GuiModule.GuiInterface import GuiInterface
 from tutel.InterpreterModule import TutelBuiltins
-from tutel.InterpreterModule.Value import Value
-from tutel.LexerModule.Lexer import Lexer
-from tutel.ParserModule import Classes
-from tutel.ParserModule.Parser import Parser
 from tutel.InterpreterModule.Turtle.Turtle import Turtle
+from tutel.InterpreterModule.Value import Value
+from tutel.ParserModule import Classes
 
 
 def set_gui(gui: GuiInterface):
     Turtle.set_gui(gui)
+
+
+def set_verbose():
+    Turtle.gui.verbose = True
 
 
 class Interpreter:

@@ -13,7 +13,7 @@ def _message(msg: str):
 def get_json(*objects):
     dict_ = {}
     for object_ in objects:
-        dict_.update(**object_.__dict__)
+        dict_.update(object_.dict())
     return json.dumps(dict_)
 
 
@@ -55,7 +55,7 @@ class GuiVsCode(GuiInterface):
         return True
 
     def go_forward(self, turtle_id: int, position: Position) -> bool:
-        request = create_request(method="FORWARD", id=turtle_id)
+        request = create_request(method="FORWARD", id=turtle_id, body=get_json(position))
         _message(request)
         return True
 

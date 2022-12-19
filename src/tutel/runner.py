@@ -1,9 +1,10 @@
 import argparse
 import os
 import sys
+from io import StringIO
 
 from tutel.ErrorHandlerModule.ErrorType import LexerException, ParserException, InterpreterException
-from tutel.InterpreterModule.Interpreter import Interpreter, set_gui
+from tutel.InterpreterModule.Interpreter import Interpreter, set_gui, set_verbose
 from tutel.LexerModule.Lexer import Lexer
 from tutel.ParserModule.Parser import Parser
 
@@ -11,15 +12,31 @@ from tutel.ParserModule.Parser import Parser
 def get_arg_parser():
     arg_parser = argparse.ArgumentParser()
 
-    arg_parser.add_argument(
-        "filename",
+    group = arg_parser.add_mutually_exclusive_group(required=False)
+
+    group.add_argument(
+        "-f",
+        "--filename",
         default=None,
         type=argparse.FileType('r'),
         help="Relative or absolute path to a script",
     )
+    group.add_argument(
+        "-c",
+        "--code",
+        default=None,
+        type=str,
+        help="Code to execute as a string",
+    )
+
     arg_parser.add_argument(
         "-v",
         "--verbose",
+        default=False,
+        action="store_true",
+    )
+    arg_parser.add_argument(
+        "--vscode",
         default=False,
         action="store_true",
     )
@@ -27,19 +44,36 @@ def get_arg_parser():
     return arg_parser
 
 
-def main(filename: str | None = None, flags: tuple[str] = None):
+def main(filename: str | None = None, code: str | None = None, flags: tuple[str] = None):
+    print(sys.argv)
+    if filename and code:
+        raise RuntimeError("You should give the filename or the code and not both of them.")
     if filename:
+        sys.argv.append("-f")
         sys.argv.append(filename)
+    if code:
+        sys.argv.append("-c")
+        sys.argv.append(code)
     if flags:
         sys.argv += flags
     arg_parser = get_arg_parser()
     args = arg_parser.parse_args()
 
-    args.filename = os.path.realpath(args.filename.name)
-
-    with open(filename if filename is not None else args.filename, "r") as file:
+    if hasattr(args, "filename") and args.filename:
+        args.filename = os.path.realpath(args.filename.name)
+        with open(filename if filename is not None else args.filename, "r") as file:
+            try:
+                lexer = Lexer(file)
+            except LexerException as e:
+                exit(-2)
+            parser = Parser()
+            try:
+                program = parser.parse(lexer)
+            except ParserException as e:
+                exit(-3)
+    elif hasattr(args, "code") and args.code:
         try:
-            lexer = Lexer(file)
+            lexer = Lexer(StringIO(args.code))
         except LexerException as e:
             exit(-2)
         parser = Parser()
@@ -49,9 +83,12 @@ def main(filename: str | None = None, flags: tuple[str] = None):
             exit(-3)
 
     interpreter = Interpreter()
-    from tutel.GuiModule.GuiMock import GuiMock
+    if args.vscode:
+        from tutel.GuiModule.GuiVsCode import GuiVsCode
 
-    set_gui(GuiMock(verbose=True))
+        set_gui(GuiVsCode())
+    if args.verbose:
+        set_verbose()
     try:
         interpreter.execute(program, "main")
     except InterpreterException as e:

@@ -1,4 +1,4 @@
-import numpy as np
+import math
 
 from tutel.GuiModule.GuiInterface import GuiInterface
 from tutel.GuiModule.GuiMock import GuiMock
@@ -67,7 +67,7 @@ class Turtle:
     @orientation.setter
     def orientation(self, orientation: Orientation):
         if orientation is not None:
-            orientation = Orientation(int(np.mod(orientation.angle, 360)))
+            orientation = Orientation(int(orientation.angle % 360))
             if self.gui.set_orientation(self.id, orientation):
                 self.__orientation = orientation
 
@@ -85,8 +85,8 @@ class Turtle:
             self.__init_state = False
         if a is not None:
             new_position = Position(
-                x=self.position.x + np.sin((self.orientation.angle / 360) * 2 * np.pi) * a,
-                y=self.position.y + np.cos((self.orientation.angle / 360) * 2 * np.pi) * a
+                x=self.position.x + math.sin((self.orientation.angle / 360) * 2 * math.pi) * a,
+                y=self.position.y + math.cos((self.orientation.angle / 360) * 2 * math.pi) * a
             )
             if self.gui.go_forward(self.id, new_position):
                 self.position = new_position

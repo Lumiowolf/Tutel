@@ -22,3 +22,6 @@ class Color:
 
     def __str__(self) -> str:
         return f"(R: {self.r}, G: {self.g}, B: {self.b})"
+
+    def dict(self):
+        return {"r": self.r, "g": self.g, "b": self.b}

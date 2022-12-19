@@ -8,3 +8,6 @@ class Orientation:
 
     def __str__(self) -> str:
         return f"(angle: {self.angle})"
+
+    def dict(self):
+        return {"angle": self.angle}
