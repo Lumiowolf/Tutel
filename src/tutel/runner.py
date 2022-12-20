@@ -3,6 +3,7 @@ import os
 import sys
 from io import StringIO
 
+import tutel
 from tutel.ErrorHandlerModule.ErrorType import LexerException, ParserException, InterpreterException
 from tutel.InterpreterModule.Interpreter import Interpreter, set_gui, set_verbose
 from tutel.LexerModule.Lexer import Lexer
@@ -40,12 +41,16 @@ def get_arg_parser():
         default=False,
         action="store_true",
     )
+    arg_parser.add_argument(
+        "--version",
+        default=False,
+        action="store_true",
+    )
 
     return arg_parser
 
 
 def main(filename: str | None = None, code: str | None = None, flags: tuple[str] = None):
-    print(sys.argv)
     if filename and code:
         raise RuntimeError("You should give the filename or the code and not both of them.")
     if filename:
@@ -58,6 +63,9 @@ def main(filename: str | None = None, code: str | None = None, flags: tuple[str]
         sys.argv += flags
     arg_parser = get_arg_parser()
     args = arg_parser.parse_args()
+    if args.version:
+        print(f"Tutel {tutel.__version__}")
+        exit(0)
 
     if hasattr(args, "filename") and args.filename:
         args.filename = os.path.realpath(args.filename.name)
@@ -81,6 +89,9 @@ def main(filename: str | None = None, code: str | None = None, flags: tuple[str]
             program = parser.parse(lexer)
         except ParserException as e:
             exit(-3)
+    else:
+        print("Nothing to execute")
+        exit(0)
 
     interpreter = Interpreter()
     if args.vscode:
