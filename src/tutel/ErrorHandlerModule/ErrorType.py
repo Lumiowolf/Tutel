@@ -277,6 +277,16 @@ class MissingRightSquareBracketException(ParserException):
         return msg.encode("unicode-escape").decode()
 
 
+class MissingEtx(ParserException):
+    def __str__(self) -> str:
+        msg = f"{self.base_msg}" \
+              f"{self.method}: " \
+              "Unknown character (not a function def): " \
+              f"'{self.token.value}' " \
+              f"at {self.token.line}:{self.token.column}"
+        return msg.encode("unicode-escape").decode()
+
+
 ##########################
 # Interpreter exceptions #
 ##########################
@@ -306,7 +316,7 @@ class CannotAssignException(InterpreterException):
 
     def __str__(self) -> str:
         msg = f"{self.base_msg}" \
-              f"object at {self.value.position[0]}:{self.value.position[1]} " \
+              f"object {self.value} " \
               "is not assignable"
         return msg.encode("unicode-escape").decode()
 

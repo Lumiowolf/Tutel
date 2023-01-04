@@ -1,18 +1,19 @@
 class Visited:
-    def __init__(self, position: (int, int) = ()):
-        self.position = position
+    def __init__(self, lineno: int):
+        self.lineno = lineno
 
 
 class Program(Visited):
-    def __init__(self, functions: dict[str, "Function"]) -> None:
-        super().__init__((1, 1))
+    def __init__(self, functions: dict[str, "Function"], lineno: int, main: str = "main") -> None:
+        super().__init__(lineno)
         self.functions = functions
+        self.main = main
 
     def accept(self, visitor):
         return visitor.visit_program(self)
 
     def __repr__(self):
-        return f"{type(self).__name__}({self.functions})"
+        return f"{type(self).__name__}({self.functions}, lineno={self.lineno})"
 
     def __eq__(self, other):
         if self.functions != other.functions:
@@ -22,8 +23,8 @@ class Program(Visited):
 
 class Function(Visited):
     def __init__(self, name: "Identifier", params: list["Identifier"], statements: "Block",
-                 position: (int, int) = ()) -> None:
-        super().__init__(position)
+                 lineno: int) -> None:
+        super().__init__(lineno)
         self.name = name
         self.params = params
         self.statements = statements
@@ -32,7 +33,7 @@ class Function(Visited):
         return visitor.visit_function(self)
 
     def __repr__(self):
-        return f"{type(self).__name__}({self.name}, {self.params}, {self.statements})"
+        return f"{type(self).__name__}({self.name}, {self.params}, {self.statements}, lineno={self.lineno})"
 
     def __eq__(self, other):
         if self.name != other.name:
@@ -45,9 +46,9 @@ class Function(Visited):
 
 
 class Block(list, Visited):
-    def __init__(self, statements: list["Statement"] = (), position: (int, int) = ()) -> None:
+    def __init__(self, statements: list["Statement"], lineno: int) -> None:
         super().__init__(statements)
-        self.position = position
+        self.lineno = lineno
 
     def accept(self, visitor):
         return visitor.visit_block(self)
@@ -58,8 +59,8 @@ class Statement(Visited):
 
 
 class Assignment(Statement):
-    def __init__(self, left_expr: "Expression", right_expr: "Expression", position: (int, int) = ()) -> None:
-        super().__init__(position)
+    def __init__(self, left_expr: "Expression", right_expr: "Expression", lineno: int) -> None:
+        super().__init__(lineno)
         self.left_expr = left_expr
         self.right_expr = right_expr
         self.operator = None
@@ -72,12 +73,12 @@ class Assignment(Statement):
         return True
 
     def __repr__(self):
-        return f"{type(self).__name__}({self.left_expr}, {self.right_expr})"
+        return f"{type(self).__name__}({self.left_expr}, {self.right_expr}, lineno={self.lineno})"
 
 
 class BasicAssignment(Assignment):
-    def __init__(self, left_expr: "Identifier", right_expr: "Expression", position: (int, int) = ()) -> None:
-        super().__init__(left_expr, right_expr, position)
+    def __init__(self, left_expr: "Identifier", right_expr: "Expression", lineno: int) -> None:
+        super().__init__(left_expr, right_expr, lineno)
         self.operator = '='
 
     def accept(self, visitor):
@@ -85,53 +86,53 @@ class BasicAssignment(Assignment):
 
 
 class ModifyingAssignment(Assignment):
-    def __init__(self, left_expr: "Expression", right_expr: "Expression", position: (int, int) = ()) -> None:
-        super().__init__(left_expr, right_expr, position)
+    def __init__(self, left_expr: "Expression", right_expr: "Expression", lineno: int) -> None:
+        super().__init__(left_expr, right_expr, lineno)
 
     def accept(self, visitor):
         return visitor.visit_modifying_assignment(self)
 
 
 class AddAssignment(ModifyingAssignment):
-    def __init__(self, left_expr: "Identifier", right_expr: "Expression", position: (int, int) = ()) -> None:
-        super().__init__(left_expr, right_expr, position)
+    def __init__(self, left_expr: "Identifier", right_expr: "Expression", lineno: int) -> None:
+        super().__init__(left_expr, right_expr, lineno)
         self.operator = '+='
 
 
 class SubAssignment(ModifyingAssignment):
-    def __init__(self, left_expr: "Identifier", right_expr: "Expression", position: (int, int) = ()) -> None:
-        super().__init__(left_expr, right_expr, position)
+    def __init__(self, left_expr: "Identifier", right_expr: "Expression", lineno: int) -> None:
+        super().__init__(left_expr, right_expr, lineno)
         self.operator = '-='
 
 
 class MulAssignment(ModifyingAssignment):
-    def __init__(self, left_expr: "Identifier", right_expr: "Expression", position: (int, int) = ()) -> None:
-        super().__init__(left_expr, right_expr, position)
+    def __init__(self, left_expr: "Identifier", right_expr: "Expression", lineno: int) -> None:
+        super().__init__(left_expr, right_expr, lineno)
         self.operator = '*='
 
 
 class DivAssignment(ModifyingAssignment):
-    def __init__(self, left_expr: "Identifier", right_expr: "Expression", position: (int, int) = ()) -> None:
-        super().__init__(left_expr, right_expr, position)
+    def __init__(self, left_expr: "Identifier", right_expr: "Expression", lineno: int) -> None:
+        super().__init__(left_expr, right_expr, lineno)
         self.operator = '/='
 
 
 class ModAssignment(ModifyingAssignment):
-    def __init__(self, left_expr: "Identifier", right_expr: "Expression", position: (int, int) = ()) -> None:
-        super().__init__(left_expr, right_expr, position)
+    def __init__(self, left_expr: "Identifier", right_expr: "Expression", lineno: int) -> None:
+        super().__init__(left_expr, right_expr, lineno)
         self.operator = '%='
 
 
 class ReturnStatement(Statement):
-    def __init__(self, values: list["Expression"], position: (int, int) = ()) -> None:
-        super().__init__(position)
+    def __init__(self, values: list["Expression"], lineno: int) -> None:
+        super().__init__(lineno)
         self.values = values
 
     def accept(self, visitor):
         return visitor.visit_return_statement(self)
 
     def __repr__(self):
-        return f"{type(self).__name__}({self.values})"
+        return f"{type(self).__name__}({self.values}, lineno={self.lineno})"
 
     def __eq__(self, other):
         if self.values != other.values:
@@ -141,8 +142,8 @@ class ReturnStatement(Statement):
 
 class IfStatement(Statement):
     def __init__(self, condition: "Expression", statements: "Block", elif_stmts: list["ElifBlock"],
-                 else_stmt: "ElseBlock | None" = None, position: (int, int) = ()) -> None:
-        super().__init__(position)
+                 else_stmt: "ElseBlock | None", lineno: int) -> None:
+        super().__init__(lineno)
         self.condition = condition
         self.statements = statements
         self.elif_stmts = elif_stmts
@@ -152,7 +153,7 @@ class IfStatement(Statement):
         return visitor.visit_if_statement(self)
 
     def __repr__(self):
-        return f"{type(self).__name__}({self.condition}, {self.statements}, {self.elif_stmts}, {self.else_stmt})"
+        return f"{type(self).__name__}({self.condition}, {self.statements}, {self.elif_stmts}, {self.else_stmt}, lineno={self.lineno})"
 
     def __eq__(self, other):
         if self.condition != other.condition:
@@ -171,8 +172,8 @@ class IfStatement(Statement):
 
 
 class ElifBlock(Visited):
-    def __init__(self, condition: "Expression", statements: "Block", position: (int, int) = ()) -> None:
-        super().__init__(position)
+    def __init__(self, condition: "Expression", statements: "Block", lineno: int) -> None:
+        super().__init__(lineno)
         self.condition = condition
         self.statements = statements
 
@@ -180,7 +181,7 @@ class ElifBlock(Visited):
         return visitor.visit_elif_block(self)
 
     def __repr__(self):
-        return f"{type(self).__name__}({self.condition}, {self.statements})"
+        return f"{type(self).__name__}({self.condition}, {self.statements}, lineno={self.lineno})"
 
     def __eq__(self, other):
         if self.condition != other.condition:
@@ -191,8 +192,8 @@ class ElifBlock(Visited):
 
 
 class ElseBlock(Block):
-    def __init__(self, statements: "Block", position: (int, int) = ()) -> None:
-        super().__init__(statements, position)
+    def __init__(self, statements: "Block", lineno: int) -> None:
+        super().__init__(statements, lineno)
 
     def accept(self, visitor):
         return visitor.visit_else_block(self)
@@ -200,8 +201,8 @@ class ElseBlock(Block):
 
 class ForStatement(Statement):
     def __init__(self, iterator: "Identifier", iterable: "Expression", statements: "Block",
-                 position: (int, int) = ()) -> None:
-        super().__init__(position)
+                 lineno: int) -> None:
+        super().__init__(lineno)
         self.iterator = iterator
         self.iterable = iterable
         self.statements = statements
@@ -210,7 +211,7 @@ class ForStatement(Statement):
         return visitor.visit_for_statement(self)
 
     def __repr__(self):
-        return f"{type(self).__name__}({self.iterator}, {self.iterable}, {self.statements})"
+        return f"{type(self).__name__}({self.iterator}, {self.iterable}, {self.statements}, lineno={self.lineno})"
 
     def __eq__(self, other):
         if self.iterator != other.iterator:
@@ -223,8 +224,8 @@ class ForStatement(Statement):
 
 
 class WhileStatement(Statement):
-    def __init__(self, condition: "Expression", statements: "Block", position: (int, int) = ()) -> None:
-        super().__init__(position)
+    def __init__(self, condition: "Expression", statements: "Block", lineno: int) -> None:
+        super().__init__(lineno)
         self.condition = condition
         self.statements = statements
 
@@ -232,7 +233,7 @@ class WhileStatement(Statement):
         return visitor.visit_while_statement(self)
 
     def __repr__(self):
-        return f"{type(self).__name__}({self.condition}, {self.statements})"
+        return f"{type(self).__name__}({self.condition}, {self.statements}, lineno={self.lineno})"
 
     def __eq__(self, other):
         if self.condition != other.condition:
@@ -243,14 +244,14 @@ class WhileStatement(Statement):
 
 
 class TwoSidedExpression(Statement):
-    def __init__(self, left_expr: "Expression", right_expr: "Expression", position: (int, int) = ()) -> None:
-        super().__init__(position)
+    def __init__(self, left_expr: "Expression", right_expr: "Expression", lineno: int) -> None:
+        super().__init__(lineno)
         self.left_expr = left_expr
         self.right_expr = right_expr
         self.operator = None
 
     def __repr__(self):
-        return f"{type(self).__name__}({self.left_expr}, {self.right_expr})"
+        return f"{type(self).__name__}({self.left_expr}, {self.right_expr}, lineno={self.lineno})"
 
     def __eq__(self, other):
         if self.left_expr != other.left_expr:
@@ -266,103 +267,103 @@ class TwoSidedExpression(Statement):
 
 
 class OrExpr(TwoSidedExpression):
-    def __init__(self, left_expr: "Expression", right_expr: "Expression", position: (int, int) = ()) -> None:
-        super().__init__(left_expr, right_expr, position)
+    def __init__(self, left_expr: "Expression", right_expr: "Expression", lineno: int) -> None:
+        super().__init__(left_expr, right_expr, lineno)
         self.operator = "or"
 
 
 class AndExpr(TwoSidedExpression):
-    def __init__(self, left_expr: "Expression", right_expr: "Expression", position: (int, int) = ()) -> None:
-        super().__init__(left_expr, right_expr, position)
+    def __init__(self, left_expr: "Expression", right_expr: "Expression", lineno: int) -> None:
+        super().__init__(left_expr, right_expr, lineno)
         self.operator = "and"
 
 
 class EqExpr(TwoSidedExpression):
-    def __init__(self, left_expr: "Expression", right_expr: "Expression", position: (int, int) = ()) -> None:
-        super().__init__(left_expr, right_expr, position)
+    def __init__(self, left_expr: "Expression", right_expr: "Expression", lineno: int) -> None:
+        super().__init__(left_expr, right_expr, lineno)
         self.operator = "=="
 
 
 class NotEqExpr(TwoSidedExpression):
-    def __init__(self, left_expr: "Expression", right_expr: "Expression", position: (int, int) = ()) -> None:
-        super().__init__(left_expr, right_expr, position)
+    def __init__(self, left_expr: "Expression", right_expr: "Expression", lineno: int) -> None:
+        super().__init__(left_expr, right_expr, lineno)
         self.operator = "!="
 
 
 class LessExpr(TwoSidedExpression):
-    def __init__(self, left_expr: "Expression", right_expr: "Expression", position: (int, int) = ()) -> None:
-        super().__init__(left_expr, right_expr, position)
+    def __init__(self, left_expr: "Expression", right_expr: "Expression", lineno: int) -> None:
+        super().__init__(left_expr, right_expr, lineno)
         self.operator = "<"
 
 
 class GreaterExpr(TwoSidedExpression):
-    def __init__(self, left_expr: "Expression", right_expr: "Expression", position: (int, int) = ()) -> None:
-        super().__init__(left_expr, right_expr, position)
+    def __init__(self, left_expr: "Expression", right_expr: "Expression", lineno: int) -> None:
+        super().__init__(left_expr, right_expr, lineno)
         self.operator = ">"
 
 
 class LessEqExpr(TwoSidedExpression):
-    def __init__(self, left_expr: "Expression", right_expr: "Expression", position: (int, int) = ()) -> None:
-        super().__init__(left_expr, right_expr, position)
+    def __init__(self, left_expr: "Expression", right_expr: "Expression", lineno: int) -> None:
+        super().__init__(left_expr, right_expr, lineno)
         self.operator = "<="
 
 
 class GreaterEqExpr(TwoSidedExpression):
-    def __init__(self, left_expr: "Expression", right_expr: "Expression", position: (int, int) = ()) -> None:
-        super().__init__(left_expr, right_expr, position)
+    def __init__(self, left_expr: "Expression", right_expr: "Expression", lineno: int) -> None:
+        super().__init__(left_expr, right_expr, lineno)
         self.operator = ">="
 
 
 class InExpr(TwoSidedExpression):
-    def __init__(self, left_expr: "Expression", right_expr: "Expression", position: (int, int) = ()) -> None:
-        super().__init__(left_expr, right_expr, position)
+    def __init__(self, left_expr: "Expression", right_expr: "Expression", lineno: int) -> None:
+        super().__init__(left_expr, right_expr, lineno)
         self.operator = "in"
 
 
 class AddExpr(TwoSidedExpression):
-    def __init__(self, left_expr: "Expression", right_expr: "Expression", position: (int, int) = ()) -> None:
-        super().__init__(left_expr, right_expr, position)
+    def __init__(self, left_expr: "Expression", right_expr: "Expression", lineno: int) -> None:
+        super().__init__(left_expr, right_expr, lineno)
         self.operator = "+"
 
 
 class SubExpr(TwoSidedExpression):
-    def __init__(self, left_expr: "Expression", right_expr: "Expression", position: (int, int) = ()) -> None:
-        super().__init__(left_expr, right_expr, position)
+    def __init__(self, left_expr: "Expression", right_expr: "Expression", lineno: int) -> None:
+        super().__init__(left_expr, right_expr, lineno)
         self.operator = "-"
 
 
 class MulExpr(TwoSidedExpression):
-    def __init__(self, left_expr: "Expression", right_expr: "Expression", position: (int, int) = ()) -> None:
-        super().__init__(left_expr, right_expr, position)
+    def __init__(self, left_expr: "Expression", right_expr: "Expression", lineno: int) -> None:
+        super().__init__(left_expr, right_expr, lineno)
         self.operator = "*"
 
 
 class DivExpr(TwoSidedExpression):
-    def __init__(self, left_expr: "Expression", right_expr: "Expression", position: (int, int) = ()) -> None:
-        super().__init__(left_expr, right_expr, position)
+    def __init__(self, left_expr: "Expression", right_expr: "Expression", lineno: int) -> None:
+        super().__init__(left_expr, right_expr, lineno)
         self.operator = "/"
 
 
 class ModExpr(TwoSidedExpression):
-    def __init__(self, left_expr: "Expression", right_expr: "Expression", position: (int, int) = ()) -> None:
-        super().__init__(left_expr, right_expr, position)
+    def __init__(self, left_expr: "Expression", right_expr: "Expression", lineno: int) -> None:
+        super().__init__(left_expr, right_expr, lineno)
         self.operator = "%"
 
 
 class IntDivExpr(TwoSidedExpression):
-    def __init__(self, left_expr: "Expression", right_expr: "Expression", position: (int, int) = ()) -> None:
-        super().__init__(left_expr, right_expr, position)
+    def __init__(self, left_expr: "Expression", right_expr: "Expression", lineno: int) -> None:
+        super().__init__(left_expr, right_expr, lineno)
         self.operator = "//"
 
 
 class OneSidedExpression(Statement):
-    def __init__(self, value: "Expression", position: (int, int) = ()) -> None:
-        super().__init__(position)
+    def __init__(self, value: "Expression", lineno: int) -> None:
+        super().__init__(lineno)
         self.value = value
         self.operator = None
 
     def __repr__(self):
-        return f"{type(self).__name__}({self.value})"
+        return f"{type(self).__name__}({self.value}, lineno={self.lineno})"
 
     def __eq__(self, other):
         if self.value != other.value:
@@ -377,13 +378,13 @@ class OneSidedExpression(Statement):
 
 class InvertExpr(OneSidedExpression):
     def __init__(self, value: "Expression") -> None:
-        super().__init__(value, value.position)
+        super().__init__(value, value.lineno)
         self.operator = "-"
 
 
 class Negate(OneSidedExpression):
-    def __init__(self, value: "Expression", position: (int, int) = ()) -> None:
-        super().__init__(value, position)
+    def __init__(self, value: "Expression", lineno: int) -> None:
+        super().__init__(value, lineno)
         self.operator = "not"
 
 
@@ -392,8 +393,8 @@ class Assignable:
 
 
 class DotOperator(TwoSidedExpression, Assignable):
-    def __init__(self, left_expr: "Expression", right_expr: "Expression", position: (int, int) = ()) -> None:
-        super().__init__(left_expr, right_expr, position)
+    def __init__(self, left_expr: "Expression", right_expr: "Expression", lineno: int) -> None:
+        super().__init__(left_expr, right_expr, lineno)
         self.operator = "."
 
     def accept(self, visitor):
@@ -402,7 +403,7 @@ class DotOperator(TwoSidedExpression, Assignable):
 
 class FunCall(TwoSidedExpression, Assignable):
     def __repr__(self):
-        return f"{type(self).__name__}({self.left_expr}, {self.right_expr})"
+        return f"{type(self).__name__}({self.left_expr}, {self.right_expr}, lineno={self.lineno})"
 
     def accept(self, visitor):
         return visitor.visit_fun_call(self)
@@ -415,12 +416,12 @@ class ListElement(TwoSidedExpression, Assignable):
 
 class Atom(Statement):
     def __init__(self, value: "Expression | list[Expression] | str | int | bool | None",
-                 position: (int, int) = ()) -> None:
-        super().__init__(position)
+                 lineno: int) -> None:
+        super().__init__(lineno)
         self.value = value
 
     def __repr__(self) -> str:
-        return f"{type(self).__name__}({self.value})"
+        return f"{type(self).__name__}({self.value}, lineno={self.lineno})"
 
     def __eq__(self, other) -> bool:
         if self.value != other.value:
@@ -432,45 +433,45 @@ class Atom(Statement):
 
 
 class List(Atom):
-    def __init__(self, value: list["Expression"], position: (int, int) = ()) -> None:
-        super().__init__(value, position)
+    def __init__(self, value: list["Expression"], lineno: int) -> None:
+        super().__init__(value, lineno)
 
     def accept(self, visitor):
         return visitor.visit_list(self)
 
 
 class String(Atom):
-    def __init__(self, value: str, position: (int, int) = ()) -> None:
-        super().__init__(value, position)
+    def __init__(self, value: str, lineno: int) -> None:
+        super().__init__(value, lineno)
 
     def __repr__(self):
-        return f"{type(self).__name__}(\"{self.value}\")"
+        return f"{type(self).__name__}(\"{self.value}\", lineno={self.lineno})"
 
 
 class Integer(Atom):
-    def __init__(self, value: int, position: (int, int) = ()) -> None:
-        super().__init__(value, position)
+    def __init__(self, value: int, lineno: int) -> None:
+        super().__init__(value, lineno)
 
 
 class Boolean(Atom):
-    def __init__(self, value: bool, position: (int, int) = ()) -> None:
-        super().__init__(value, position)
+    def __init__(self, value: bool, lineno: int) -> None:
+        super().__init__(value, lineno)
 
 
 class Null(Atom):
-    def __init__(self, position: (int, int) = ()) -> None:
-        super().__init__(None, position)
+    def __init__(self, lineno: int) -> None:
+        super().__init__(None, lineno)
 
     def __repr__(self):
-        return f"{type(self).__name__}()"
+        return f"{type(self).__name__}(lineno={self.lineno})"
 
 
 class Identifier(Atom, Assignable):
-    def __init__(self, value: str, position: (int, int) = ()) -> None:
-        super().__init__(value, position)
+    def __init__(self, value: str, lineno: int) -> None:
+        super().__init__(value, lineno)
 
     def __repr__(self):
-        return f"{type(self).__name__}(\"{self.value}\")"
+        return f"{type(self).__name__}(\"{self.value}\", lineno={self.lineno})"
 
     def accept(self, visitor):
         return visitor.visit_identifier(self)

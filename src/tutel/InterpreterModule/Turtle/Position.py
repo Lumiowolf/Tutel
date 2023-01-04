@@ -20,3 +20,6 @@ class Position:
 
     def dict(self):
         return {"x": self.x, "y": self.y}
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__} at {hex(id(self))}>"

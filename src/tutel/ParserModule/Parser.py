@@ -16,7 +16,7 @@ from tutel.ErrorHandlerModule.ErrorType import (
     MissingRightSquareBracketException,
     MissingExpressionAfterCommaException,
     MissingFunctionBlockException,
-    FunctionRedefinitionException,
+    FunctionRedefinitionException, MissingEtx,
 )
 from tutel.LexerModule.Lexer import Lexer
 from tutel.LexerModule.Tokens import TokenType, Token, TOKEN_VALUE_TYPES
@@ -49,6 +49,9 @@ class LexerInterface:
             self.lexer.get_next_token()
         return self.token
 
+    def get_lineno(self) -> int:
+        return self.lexer.token.line
+
     @property
     def token(self) -> Token:
         return self.lexer.token
@@ -76,20 +79,22 @@ class Parser:
     def _token_is(self, token_type: TokenType) -> bool:
         return self.lexer.token.type == token_type
 
-    def _get_position(self):
-        return self.lexer.token.line, self.lexer.token.column
-
     def parse(self, lexer: Lexer) -> Program:
         self.lexer = LexerInterface(lexer)
         self.functions = {}
+        lineno = self.lexer.get_lineno()
 
         while self.try_parse_function_def():
             pass
 
-        return Program(self.functions)
+        if not self._token_is(TokenType.T_ETX):
+            self.error_handler.handle_error(
+                MissingEtx(self.parse.__name__, self.lexer.token))
+
+        return Program(functions=self.functions, lineno=lineno)
 
     def try_parse_function_def(self) -> bool:
-        position = self._get_position()
+        lineno = self.lexer.get_lineno()
         if not self._token_is(TokenType.T_IDENTIFIER):
             return False
 
@@ -113,7 +118,7 @@ class Parser:
             self.error_handler.handle_error(
                 MissingFunctionBlockException(self.try_parse_function_def.__name__, self.lexer.token))
 
-        self.functions[function_name] = Function(Identifier(function_name, position), params, block, position)
+        self.functions[function_name] = Function(Identifier(function_name, lineno), params, block, lineno)
 
         return True
 
@@ -134,20 +139,21 @@ class Parser:
         return params
 
     def try_parse_block(self) -> Block | None:
-        block = Block()
+        lineno = self.lexer.get_lineno()
+        statements: list[Statement] = []
         instruction: Statement
 
         if not self._check_and_consume(TokenType.T_LEFT_CURLY_BRACKET):
             return None
 
         while instruction := self.try_parse_statement():
-            block.append(instruction)
+            statements.append(instruction)
 
         if not self._check_and_consume(TokenType.T_RIGHT_CURLY_BRACKET):
             self.error_handler.handle_error(
                 MissingRightCurlyBracketException(self.try_parse_block.__name__, self.lexer.token))
 
-        return block
+        return Block(statements, lineno)
 
     def try_parse_statement(self) -> Statement | None:
         if statement := self.try_parse_simple_statement():
@@ -185,7 +191,7 @@ class Parser:
         return None
 
     def try_parse_assignment(self, left_side: Expression) -> Assignment | None:
-        position = self._get_position()
+        lineno = self.lexer.get_lineno()
         if not (assignment_type := assignment_mapper.get(self.lexer.token.type)):
             return None
 
@@ -195,16 +201,16 @@ class Parser:
             self.error_handler.handle_error(
                 MissingRightSideOfAssignmentException(self.try_parse_assignment.__name__, self.lexer.token))
 
-        return assignment_type(left_side, right_side, position)
+        return assignment_type(left_side, right_side, lineno)
 
     def try_parse_return_statement(self) -> ReturnStatement | None:
-        position = self._get_position()
+        lineno = self.lexer.get_lineno()
         if not self._check_and_consume(TokenType.T_RETURN):
             return None
 
         return_values = self.try_parse_return_values()
 
-        return ReturnStatement(return_values, position)
+        return ReturnStatement(return_values, lineno)
 
     def try_parse_return_values(self) -> list[Expression]:
         expressions: list[Expression] = []
@@ -224,7 +230,7 @@ class Parser:
         return expressions
 
     def try_parse_if_statement(self) -> IfStatement | None:
-        position = self._get_position()
+        lineno = self.lexer.get_lineno()
         condition: Expression
         body: Block
 
@@ -254,10 +260,10 @@ class Parser:
 
         else_block = self.try_parse_else_block()
 
-        return IfStatement(condition, body, elif_blocks, else_block, position)
+        return IfStatement(condition, body, elif_blocks, else_block, lineno)
 
     def try_parse_elif_block(self) -> ElifBlock | None:
-        position = self._get_position()
+        lineno = self.lexer.get_lineno()
         condition: Expression
         body: Block
 
@@ -279,10 +285,10 @@ class Parser:
         if (body := self.try_parse_compound_statement_body()) is None:
             self.error_handler.handle_error(MissingBodyException(self.try_parse_elif_block.__name__, self.lexer.token))
 
-        return ElifBlock(condition, body, position)
+        return ElifBlock(condition, body, lineno)
 
     def try_parse_else_block(self) -> ElseBlock | None:
-        position = self._get_position()
+        lineno = self.lexer.get_lineno()
         body: Block
 
         if not self._check_and_consume(TokenType.T_ELSE):
@@ -291,10 +297,10 @@ class Parser:
         if (body := self.try_parse_compound_statement_body()) is None:
             self.error_handler.handle_error(MissingBodyException(self.try_parse_else_block.__name__, self.lexer.token))
 
-        return ElseBlock(body, position)
+        return ElseBlock(body, lineno)
 
     def try_parse_for_statement(self) -> ForStatement | None:
-        position = self._get_position()
+        lineno = self.lexer.get_lineno()
         iterator: Identifier
         iterable: Expression
         body: Block
@@ -326,10 +332,10 @@ class Parser:
             self.error_handler.handle_error(
                 MissingBodyException(self.try_parse_for_statement.__name__, self.lexer.token))
 
-        return ForStatement(iterator, iterable, body, position)
+        return ForStatement(iterator, iterable, body, lineno)
 
     def try_parse_while_statement(self) -> WhileStatement | None:
-        position = self._get_position()
+        lineno = self.lexer.get_lineno()
         condition: Expression
         body: Block
 
@@ -352,9 +358,10 @@ class Parser:
             self.error_handler.handle_error(
                 MissingBodyException(self.try_parse_while_statement.__name__, self.lexer.token))
 
-        return WhileStatement(condition, body, position)
+        return WhileStatement(condition, body, lineno)
 
     def try_parse_compound_statement_body(self) -> Block | None:
+        lineno = self.lexer.get_lineno()
         block: Block
         statement: Statement
 
@@ -362,12 +369,12 @@ class Parser:
             return block
 
         if statement := self.try_parse_statement():
-            return Block([statement])
+            return Block([statement], lineno)
 
         return None
 
     def try_parse_expression(self) -> Expression | None:
-        position = self._get_position()
+        lineno = self.lexer.get_lineno()
         if not (left_expr := self.try_parse_or_expr()):
             return None
 
@@ -376,12 +383,12 @@ class Parser:
                 self.error_handler.handle_error(
                     ExprMissingRightSideException(self.try_parse_expression.__name__, self.lexer.token))
 
-            left_expr = OrExpr(left_expr, right_expr, position)
+            left_expr = OrExpr(left_expr, right_expr, lineno)
 
         return left_expr
 
     def try_parse_or_expr(self) -> Expression | None:
-        position = self._get_position()
+        lineno = self.lexer.get_lineno()
         if not (left_expr := self.try_parse_and_expr()):
             return None
 
@@ -390,12 +397,12 @@ class Parser:
                 self.error_handler.handle_error(
                     ExprMissingRightSideException(self.try_parse_or_expr.__name__, self.lexer.token))
 
-            left_expr = AndExpr(left_expr, right_expr, position)
+            left_expr = AndExpr(left_expr, right_expr, lineno)
 
         return left_expr
 
     def try_parse_and_expr(self) -> Expression | None:
-        position = self._get_position()
+        lineno = self.lexer.get_lineno()
         negate = False
         at_least_one = False
         while self._check_and_consume(TokenType.T_NOT):
@@ -409,12 +416,12 @@ class Parser:
             return None
 
         if negate:
-            return Negate(expr, position)
+            return Negate(expr, lineno)
 
         return expr
 
     def try_parse_negate_expr(self) -> Expression | None:
-        position = self._get_position()
+        lineno = self.lexer.get_lineno()
         if not (left_expr := self.try_parse_comp_expr()):
             return None
 
@@ -424,12 +431,12 @@ class Parser:
                 self.error_handler.handle_error(
                     ExprMissingRightSideException(self.try_parse_negate_expr.__name__, self.lexer.token))
 
-            left_expr = comp_type(left_expr, right_expr, position)
+            left_expr = comp_type(left_expr, right_expr, lineno)
 
         return left_expr
 
     def try_parse_comp_expr(self) -> Expression | None:
-        position = self._get_position()
+        lineno = self.lexer.get_lineno()
         if not (left_expr := self.try_parse_sum_expr()):
             return None
 
@@ -439,12 +446,12 @@ class Parser:
                 self.error_handler.handle_error(
                     ExprMissingRightSideException(self.try_parse_comp_expr.__name__, self.lexer.token))
 
-            left_expr = sum_type(left_expr, right_expr, position)
+            left_expr = sum_type(left_expr, right_expr, lineno)
 
         return left_expr
 
     def try_parse_sum_expr(self) -> Expression | None:
-        position = self._get_position()
+        lineno = self.lexer.get_lineno()
         if not (left_expr := self.try_parse_mul_expr()):
             return None
 
@@ -454,7 +461,7 @@ class Parser:
                 self.error_handler.handle_error(
                     ExprMissingRightSideException(self.try_parse_sum_expr.__name__, self.lexer.token))
 
-            left_expr = mul_type(left_expr, right_expr, position)
+            left_expr = mul_type(left_expr, right_expr, lineno)
 
         return left_expr
 
@@ -487,7 +494,7 @@ class Parser:
             return expr
 
     def try_parse_atom(self) -> Expression | None:
-        position = self._get_position()
+        lineno = self.lexer.get_lineno()
 
         if (expr := self.try_parse_identifier()) is not None:
             return expr
@@ -499,22 +506,22 @@ class Parser:
             return expr
 
         if (string := self._check_and_return(TokenType.T_TEXT_CONST)) is not None:
-            return String(string, position)
+            return String(string, lineno)
 
         if (number := self._check_and_return(TokenType.T_NUMBER)) is not None:
-            return Integer(number, position)
+            return Integer(number, lineno)
 
         if self._token_is(TokenType.T_TRUE):
             self.lexer.get_next_token()
-            return Boolean(True, position)
+            return Boolean(True, lineno)
 
         if self._token_is(TokenType.T_FALSE):
             self.lexer.get_next_token()
-            return Boolean(False, position)
+            return Boolean(False, lineno)
 
         if self._token_is(TokenType.T_NULL):
             self.lexer.get_next_token()
-            return Null(position)
+            return Null(lineno)
 
         return None
 
@@ -531,7 +538,7 @@ class Parser:
         return None
 
     def try_parse_dot_operator(self, left_expr: Expression) -> Expression | None:
-        position = self._get_position()
+        lineno = self.lexer.get_lineno()
         if not self._check_and_consume(TokenType.T_DOT):
             return None
 
@@ -539,10 +546,10 @@ class Parser:
             self.error_handler.handle_error(
                 MissingIdentifierAfterDotException(self.try_parse_dot_operator.__name__, self.lexer.token))
 
-        return DotOperator(left_expr, identifier, position)
+        return DotOperator(left_expr, identifier, lineno)
 
     def try_parse_fun_call(self, left_expr: Expression) -> Expression | None:
-        position = self._get_position()
+        lineno = self.lexer.get_lineno()
         if not self._check_and_consume(TokenType.T_LEFT_BRACKET):
             return None
 
@@ -552,7 +559,7 @@ class Parser:
             self.error_handler.handle_error(
                 MissingRightBracketException(self.try_parse_fun_call.__name__, self.lexer.token))
 
-        return FunCall(left_expr, arguments, position)
+        return FunCall(left_expr, arguments, lineno)
 
     def try_parse_arguments(self) -> list[Expression]:
         arguments: list[Expression] = []
@@ -571,7 +578,7 @@ class Parser:
         return arguments
 
     def try_parse_list_element(self, left_expr: Expression) -> Expression | None:
-        position = self._get_position()
+        lineno = self.lexer.get_lineno()
         if not self._check_and_consume(TokenType.T_LEFT_SQUARE_BRACKET):
             return None
 
@@ -581,7 +588,7 @@ class Parser:
             self.error_handler.handle_error(
                 MissingRightSquareBracketException(self.try_parse_list_element.__name__, self.lexer.token))
 
-        return ListElement(left_expr, right_expr, position)
+        return ListElement(left_expr, right_expr, lineno)
 
     def try_parse_parenthesis(self) -> Expression | None:
         if not self._check_and_consume(TokenType.T_LEFT_BRACKET):
@@ -596,7 +603,7 @@ class Parser:
         return expr
 
     def try_parse_list(self) -> Expression | None:
-        position = self._get_position()
+        lineno = self.lexer.get_lineno()
         if not self._check_and_consume(TokenType.T_LEFT_SQUARE_BRACKET):
             return None
 
@@ -606,7 +613,7 @@ class Parser:
             if not self._check_and_consume(TokenType.T_RIGHT_SQUARE_BRACKET):
                 self.error_handler.handle_error(
                     MissingRightSquareBracketException(self.try_parse_list.__name__, self.lexer.token))
-            return List(elements, position)
+            return List(elements, lineno)
         elements.append(element)
 
         while self._check_and_consume(TokenType.T_COMMA):
@@ -620,11 +627,11 @@ class Parser:
             self.error_handler.handle_error(
                 MissingRightSquareBracketException(self.try_parse_list.__name__, self.lexer.token))
 
-        return List(elements, position)
+        return List(elements, lineno)
 
     def try_parse_identifier(self) -> Identifier | None:
-        position = self._get_position()
+        lineno = self.lexer.get_lineno()
         if not (identifier := self._check_and_return(TokenType.T_IDENTIFIER)):
             return None
 
-        return Identifier(identifier, position)
+        return Identifier(identifier, lineno)

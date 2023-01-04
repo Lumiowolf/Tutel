@@ -25,3 +25,6 @@ class Color:
 
     def dict(self):
         return {"r": self.r, "g": self.g, "b": self.b}
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__} at {hex(id(self))}>"

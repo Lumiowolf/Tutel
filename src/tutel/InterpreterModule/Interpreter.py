@@ -9,9 +9,29 @@ from tutel.ErrorHandlerModule.ErrorType import NotIterableException, CannotAssig
     UnsupportedOperandException, BadOperandForUnaryException, AttributeException
 from tutel.GuiModule.GuiInterface import GuiInterface
 from tutel.InterpreterModule import TutelBuiltins
+from tutel.InterpreterModule.StackFrame import StackFrame
 from tutel.InterpreterModule.Turtle.Turtle import Turtle
 from tutel.InterpreterModule.Value import Value
 from tutel.ParserModule import Classes
+
+
+def frame(func):
+    def wrapper(self, *args, **kwargs):
+        self._add_stack_frame(args[0].name.accept(self), args[0].name.lineno)
+        result = func(self, *args, **kwargs)
+        self._drop_stack_frame()
+        return result
+
+    return wrapper
+
+
+def update_lineno(func):
+    def wrapper(self, *args, **kwargs):
+        self.lineno = args[0].lineno
+        result = func(self, *args, **kwargs)
+        return result
+
+    return wrapper
 
 
 def set_gui(gui: GuiInterface):
@@ -23,24 +43,63 @@ def set_verbose():
 
 
 class Interpreter:
-    def __init__(self, error_handler_: ErrorHandler = ErrorHandler(module="interpreter")) -> None:
-        self.is_running = False
-        self.error_handler = error_handler_
+    def __init__(self, error_handler_: ErrorHandler = None, debugger=None) -> None:
+        self.call_stack = []
         self.program_to_execute = None
         self.start_with_fun = None
         self.builtins = TutelBuiltins
         self.program_globals: dict[str, any] = {}
-        self.program_context: list[list[dict[str, Value]]] = []
-        # self._prepare_globals()
         self.return_flag = False
         self.last_returned = None
         self.do_else = True
-        self.call_stack = []
         self.function_args = None
+        self.__lineno = -1
+
+        self.error_handler = error_handler_
+        if self.error_handler is None:
+            self.error_handler = ErrorHandler(module="interpreter", stack=self.call_stack)
+        self.debugger = debugger
+
+    @property
+    def curr_frame(self) -> StackFrame:
+        return self.call_stack[-1]
+
+    def clean_up(self):
+        self.call_stack = []
+        self.program_to_execute = None
+        self.start_with_fun = None
+        self.builtins = TutelBuiltins
+        self.program_globals: dict[str, any] = {}
+        self.return_flag = False
+        self.last_returned = None
+        self.do_else = True
+        self.function_args = None
+        self.__lineno = -1
+        Turtle.id = Turtle.default_id
+
+    @property
+    def lineno(self) -> int:
+        return self.__lineno
+
+    @lineno.setter
+    def lineno(self, lineno: int):
+        if lineno != self.lineno:
+            self.curr_frame.lineno = lineno
+            self.__lineno = lineno
+            if self.debugger:
+                self.debugger.on_line_change(lineno, self.curr_frame)
+
+    # def set_lineno(self, lineno: int):
+    #     if lineno != self.lineno:
+    #         self.curr_frame.lineno = lineno
+    #         self.lineno = lineno
+    #         if self.debugger:
+    #             self.debugger.on_line_change(lineno, self.curr_frame)
 
     def execute(self, program_to_execute: Classes.Program, start_with_fun_name: str = None):
-        self.is_running = True
+        self.clean_up()
         self.program_to_execute = program_to_execute
+        self.__lineno = program_to_execute.lineno
         if len(self.program_to_execute.functions) == 0:
             self.error_handler.handle_error(NothingToRunException())
         self._add_functions_to_globals(self.program_to_execute)
@@ -55,23 +114,13 @@ class Interpreter:
         except RecursionError:
             self.error_handler.handle_error(RecursionException())
 
-    def stop(self):
-        self.is_running = False
+    def _add_stack_frame(self, fname: str = None, lineno: int = None):
+        self.call_stack.append(StackFrame(fname, lineno))
 
-    def _add_function_context(self):
-        self.program_context.append([])
-
-    def _add_context(self):
-        self.program_context[-1].append({})
-
-    def _drop_context(self):
-        self.program_context[-1] = self.program_context[-1][:-1]
-
-    def _drop_function_context(self):
-        self.program_context = self.program_context[:-1]
-
-    # def _prepare_globals(self):
-    #     self.program_globals.update(**GLOBAL_FUNCTIONS)
+    def _drop_stack_frame(self):
+        dropped_frame = self.call_stack.pop()
+        if self.debugger:
+            self.debugger.on_frame_drop(dropped_frame)
 
     def _add_functions_to_globals(self, program_: Classes.Program):
         for fun_name in program_.functions:
@@ -88,25 +137,19 @@ class Interpreter:
                 BuiltinFunctionShadowException(fun_name=name)
             )
         else:
-            self.program_context[-1][-1][name] = value
+            self.curr_frame.locals[name] = value
 
     def _get_local_var(self, var_name: str) -> Value | None:
-        for i in range(len(self.program_context[-1]) - 1, -1, -1):
-            if (val := self.program_context[-1][i].get(var_name)) is not None:
-                return val
-        return None
+        return self.curr_frame.locals.get(var_name)
 
     def _get_builtin_global_or_local_var(self, name: str) -> Callable | Classes.Function | Value | None:
         try:
             return getattr(self.builtins, name)
         except AttributeError:
             pass
-        if (global_ := self.program_globals.get(name)) is not None:
-            return global_
-        if (local := self._get_local_var(name)) is not None:
-            return local
+        return self.program_globals.get(name) or self._get_local_var(name)
 
-    def _get_value_or_variable(self, obj) -> Value | Callable | Classes.Function | None:
+    def _get_variable_or_instant_value(self, obj) -> Value | Callable | Classes.Function | None:
         if type(obj) == Classes.Identifier:
             identifier = obj.accept(self)
             if (value := self._get_builtin_global_or_local_var(identifier)) is None:
@@ -122,10 +165,9 @@ class Interpreter:
     def visit_program(self, _):
         self.start_with_fun.accept(self)
 
+    @frame
+    @update_lineno
     def visit_function(self, function: Classes.Function):
-        self._add_function_context()
-        self._add_context()
-
         if self.function_args is not None:
             if len(self.function_args) != len(function.params):
                 self.error_handler.handle_error(
@@ -144,9 +186,7 @@ class Interpreter:
 
         self.function_args = None
 
-        self._drop_context()
-        self._drop_function_context()
-
+    @update_lineno
     def visit_block(self, block: Classes.Block):
         for statement in block:
             statement.accept(self)
@@ -162,8 +202,9 @@ class Interpreter:
         return identifier.value
 
     def visit_list(self, list_: Classes.List):
-        return Value([self._get_value_or_variable(el) for el in list_.value])
+        return Value([self._get_variable_or_instant_value(el) for el in list_.value])
 
+    @update_lineno
     def visit_if_statement(self, if_stmt: Classes.IfStatement):
         self.do_else = True
         if if_stmt.condition.accept(self):
@@ -177,21 +218,23 @@ class Interpreter:
         if self.do_else and if_stmt.else_stmt:
             if_stmt.else_stmt.accept(self)
 
+    @update_lineno
     def visit_elif_block(self, elif_block: Classes.ElifBlock):
         if elif_block.condition.accept(self):
             elif_block.statements.accept(self)
             self.do_else = False
 
+    @update_lineno
     def visit_else_block(self, else_block: Classes.ElseBlock):
         for statement in else_block:
             statement.accept(self)
             if self.return_flag:
                 break
 
+    @update_lineno
     def visit_for_statement(self, for_stmt: Classes.ForStatement):
-        self._add_context()
         iterator = for_stmt.iterator.accept(self)
-        iterable = self._get_value_or_variable(for_stmt.iterable)
+        iterable = self._get_variable_or_instant_value(for_stmt.iterable)
         try:
             for i in iterable:
                 self._set_local_var(iterator, i)
@@ -200,33 +243,34 @@ class Interpreter:
                     break
         except TypeError:
             self.error_handler.handle_error(NotIterableException(type_name=type(iterable.value).__name__))
-        self._drop_context()
 
+    @update_lineno
     def visit_while_statement(self, while_stmt: Classes.WhileStatement):
-        self._add_context()
         while while_stmt.condition.accept(self):
             while_stmt.statements.accept(self)
             if self.return_flag:
                 break
-        self._drop_context()
 
-    def visit_return_statement(self, obj: Classes.ReturnStatement):
+    @update_lineno
+    def visit_return_statement(self, return_stmt: Classes.ReturnStatement):
         self.return_flag = True
-        self.last_returned = [el.accept(self) for el in obj.values]
+        self.last_returned = [el.accept(self) for el in return_stmt.values]
         if len(self.last_returned) == 0:
             self.last_returned = Value(None)
         elif len(self.last_returned) == 1:
             self.last_returned = self.last_returned[0]
 
+    @update_lineno
     def visit_basic_assignment(self, assignment: Classes.BasicAssignment):
         if not self._is_assignable(assignment.left_expr):
             self.error_handler.handle_error(CannotAssignException(value=assignment.left_expr))
         identifier = assignment.left_expr.accept(self)
-        value = self._get_value_or_variable(assignment.right_expr)
+        value = self._get_variable_or_instant_value(assignment.right_expr)
         if type(value) != Value:
             value = Value(value)
         self._set_local_var(identifier, value)
 
+    @update_lineno
     def visit_modifying_assignment(self, assignment: Classes.ModifyingAssignment):
         operators = {
             "+=": lambda a, b: a.__iadd__(b),
@@ -239,7 +283,7 @@ class Interpreter:
         if (variable := self._get_local_var(identifier)) is None:
             self.error_handler.handle_error(NotDefinedException(name=identifier))
         else:
-            value = self._get_value_or_variable(assignment.right_expr)
+            value = self._get_variable_or_instant_value(assignment.right_expr)
             if type(value) != Value:
                 value = Value(value)
             try:
@@ -250,12 +294,13 @@ class Interpreter:
                                                 operator=assignment.operator)
                 )
 
+    @update_lineno
     def visit_one_sided_expression(self, expr: Classes.OneSidedExpression):
         operators = {
             "-": operator.neg,
             "not": operator.not_,
         }
-        value = self._get_value_or_variable(expr.value)
+        value = self._get_variable_or_instant_value(expr.value)
         result = None
         try:
             result = operators[expr.operator](value)
@@ -264,6 +309,7 @@ class Interpreter:
                 BadOperandForUnaryException(type_name=type(value).__name__))
         return result
 
+    @update_lineno
     def visit_two_sided_expression(self, expr: Classes.TwoSidedExpression):
         operators = {
             "==": operator.eq,
@@ -282,8 +328,8 @@ class Interpreter:
             "//": operator.floordiv,
             "%": operator.mod,
         }
-        left = self._get_value_or_variable(expr.left_expr)
-        right = self._get_value_or_variable(expr.right_expr)
+        left = self._get_variable_or_instant_value(expr.left_expr)
+        right = self._get_variable_or_instant_value(expr.right_expr)
         result = None
         try:
             result = operators[expr.operator](left, right)
@@ -293,8 +339,9 @@ class Interpreter:
                                             r_type=type(right).__name__))
         return result
 
+    @update_lineno
     def visit_dot_operator(self, obj: Classes.DotOperator):
-        left = self._get_value_or_variable(obj.left_expr)
+        left = self._get_variable_or_instant_value(obj.left_expr)
         right = obj.right_expr.accept(self)
         result = None
         try:
@@ -303,11 +350,12 @@ class Interpreter:
             self.error_handler.handle_error(AttributeException(type_name=type(left.value).__name__, value=right))
         return result
 
+    @update_lineno
     def visit_fun_call(self, fun_call: Classes.FunCall):
-        function = self._get_value_or_variable(fun_call.left_expr)
+        function = self._get_variable_or_instant_value(fun_call.left_expr)
         arguments = []
         for arg in fun_call.right_expr:
-            arguments.append(self._get_value_or_variable(arg))
+            arguments.append(self._get_variable_or_instant_value(arg))
         if type(function) == Classes.Function:
             try:
                 self.function_args = arguments
@@ -326,12 +374,11 @@ class Interpreter:
                 self.error_handler.handle_error(
                     TypeException(e)
                 )
-            # except Exception as err:
-            #     self.error_handler.handle_error(UnknownException(err))
 
+    @update_lineno
     def visit_list_element(self, list_el: Classes.ListElement):
-        list_ = self._get_value_or_variable(list_el.left_expr)
-        index = self._get_value_or_variable(list_el.right_expr)
+        list_ = self._get_variable_or_instant_value(list_el.left_expr)
+        index = self._get_variable_or_instant_value(list_el.right_expr)
         result = None
         try:
             result = list_[index.value]

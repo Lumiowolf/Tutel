@@ -8,6 +8,7 @@ from tutel.InterpreterModule.Turtle.Position import Position
 
 
 class Turtle:
+    default_id = 0
     id = 0
     gui: GuiInterface = GuiMock()
 
@@ -90,3 +91,6 @@ class Turtle:
             )
             if self.gui.go_forward(self.id, new_position):
                 self.position = new_position
+
+    def __repr__(self):
+        return f"<{self.__class__.__name__} at {hex(id(self))}>"

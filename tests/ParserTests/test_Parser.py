@@ -24,10 +24,12 @@ from tutel.ParserModule.Parser import Parser
 
 class TestParser(unittest.TestCase):
     @parameterized.expand([
-        ("#test\nfoo(){}", Program({"foo": Function(Identifier("foo"), [], Block([]))})),
+        ("#test\nfoo(){}", Program({"foo": Function(Identifier("foo", 2), [], Block([], 2), 2)}, lineno=1)),
         ("foo(){a = 1; #test\n}",
          Program(
-             {"foo": Function(Identifier("foo"), [], Block([BasicAssignment(Identifier("a"), Integer(1))]))})),
+             {"foo": Function(Identifier("foo", lineno=1), [],
+                              Block([BasicAssignment(Identifier("a", lineno=1), Integer(1, lineno=1), lineno=1)],
+                                    lineno=1), lineno=1)}, lineno=1)),
     ])
     def test_skip_comment(self, case, expect):
         # GIVEN
@@ -42,10 +44,12 @@ class TestParser(unittest.TestCase):
         self.assertEqual(expect, program, f"Function not parsed: {case}")
 
     @parameterized.expand([
-        ("foo(){}", Program({"foo": Function(Identifier("foo"), [], Block([]))})),
+        ("foo(){}",
+         Program({"foo": Function(Identifier("foo", lineno=1), [], Block([], lineno=1), lineno=1)}, lineno=1)),
         ("foo(){} boo(){}",
          Program(
-             {"foo": Function(Identifier("foo"), [], Block([])), "boo": Function(Identifier("boo"), [], Block([]))})),
+             {"foo": Function(Identifier("foo", lineno=1), [], Block([], lineno=1), lineno=1),
+              "boo": Function(Identifier("boo", lineno=1), [], Block([], lineno=1), lineno=1)}, lineno=1)),
     ])
     def test_try_parse_function_def(self, case, expect):
         # GIVEN
@@ -62,13 +66,17 @@ class TestParser(unittest.TestCase):
     @parameterized.expand([
         ("foo(a, b){} boo(a){}",
          Program(
-             {"foo": Function(Identifier("foo"), [Identifier("a"), Identifier("b")], Block([])),
-              "boo": Function(Identifier("boo"), [Identifier("a")], Block([]))
-              })),
+             {"foo": Function(Identifier("foo", lineno=1), [Identifier("a", lineno=1), Identifier("b", lineno=1)],
+                              Block([], lineno=1), lineno=1),
+              "boo": Function(Identifier("boo", lineno=1), [Identifier("a", lineno=1)], Block([], lineno=1), lineno=1)
+              }, lineno=1)),
         ("foo(a, b, c){} boo(){} bar(var){}",
-         Program({"foo": Function(Identifier("foo"), [Identifier("a"), Identifier("b"), Identifier("c")], Block([])),
-                  "boo": Function(Identifier("boo"), [], Block([])),
-                  "bar": Function(Identifier("bar"), [Identifier("var")], Block([]))})),
+         Program({"foo": Function(Identifier("foo", lineno=1),
+                                  [Identifier("a", lineno=1), Identifier("b", lineno=1), Identifier("c", lineno=1)],
+                                  Block([], lineno=1), lineno=1),
+                  "boo": Function(Identifier("boo", lineno=1), [], Block([], lineno=1), lineno=1),
+                  "bar": Function(Identifier("bar", lineno=1), [Identifier("var", lineno=1)], Block([], lineno=1),
+                                  lineno=1)}, lineno=1)),
     ])
     def test_try_parse_params_list(self, case, expect):
         # GIVEN
@@ -84,13 +92,18 @@ class TestParser(unittest.TestCase):
 
     @parameterized.expand([
         ("foo(){var = 5;}",
-         Program({"foo": Function(Identifier("foo"), [], Block([BasicAssignment(Identifier("var"), Integer(5))]))})),
+         Program({"foo": Function(Identifier("foo", lineno=1), [],
+                                  Block([BasicAssignment(Identifier("var", lineno=1), Integer(5, lineno=1), lineno=1)],
+                                        lineno=1), lineno=1)}, lineno=1)),
         ("foo(){var = var1;} boo(){var = var1; var2 = var3;}",
          Program(
-             {"foo": Function(Identifier("foo"), [], Block([BasicAssignment(Identifier("var"), Identifier("var1"))])),
-              "boo": Function(Identifier("boo"), [], Block([
-                  BasicAssignment(Identifier("var"), Identifier("var1")),
-                  BasicAssignment(Identifier("var2"), Identifier("var3"))]))})),
+             {"foo": Function(Identifier("foo", lineno=1), [],
+                              Block([BasicAssignment(Identifier("var", lineno=1), Identifier("var1", lineno=1),
+                                                     lineno=1)], lineno=1), lineno=1),
+              "boo": Function(Identifier("boo", lineno=1), [], Block([
+                  BasicAssignment(Identifier("var", lineno=1), Identifier("var1", lineno=1), lineno=1),
+                  BasicAssignment(Identifier("var2", lineno=1), Identifier("var3", lineno=1), lineno=1)], lineno=1),
+                              lineno=1)}, lineno=1)),
     ])
     def test_try_parse_block(self, case, expect):
         # GIVEN
@@ -106,17 +119,29 @@ class TestParser(unittest.TestCase):
 
     @parameterized.expand([
         ("foo(){var = 5;}",
-         Program({"foo": Function(Identifier("foo"), [], Block([BasicAssignment(Identifier("var"), Integer(5))]))})),
+         Program({"foo": Function(Identifier("foo", lineno=1), [],
+                                  Block([BasicAssignment(Identifier("var", lineno=1), Integer(5, lineno=1), lineno=1)],
+                                        lineno=1), lineno=1)}, lineno=1)),
         ("foo(){var += 5;}",
-         Program({"foo": Function(Identifier("foo"), [], Block([AddAssignment(Identifier("var"), Integer(5))]))})),
+         Program({"foo": Function(Identifier("foo", lineno=1), [],
+                                  Block([AddAssignment(Identifier("var", lineno=1), Integer(5, lineno=1), lineno=1)],
+                                        lineno=1), lineno=1)}, lineno=1)),
         ("foo(){var -= 5;}",
-         Program({"foo": Function(Identifier("foo"), [], Block([SubAssignment(Identifier("var"), Integer(5))]))})),
+         Program({"foo": Function(Identifier("foo", lineno=1), [],
+                                  Block([SubAssignment(Identifier("var", lineno=1), Integer(5, lineno=1), lineno=1)],
+                                        lineno=1), lineno=1)}, lineno=1)),
         ("foo(){var *= 5;}",
-         Program({"foo": Function(Identifier("foo"), [], Block([MulAssignment(Identifier("var"), Integer(5))]))})),
+         Program({"foo": Function(Identifier("foo", lineno=1), [],
+                                  Block([MulAssignment(Identifier("var", lineno=1), Integer(5, lineno=1), lineno=1)],
+                                        lineno=1), lineno=1)}, lineno=1)),
         ("foo(){var /= 5;}",
-         Program({"foo": Function(Identifier("foo"), [], Block([DivAssignment(Identifier("var"), Integer(5))]))})),
+         Program({"foo": Function(Identifier("foo", lineno=1), [],
+                                  Block([DivAssignment(Identifier("var", lineno=1), Integer(5, lineno=1), lineno=1)],
+                                        lineno=1), lineno=1)}, lineno=1)),
         ("foo(){var %= 5;}",
-         Program({"foo": Function(Identifier("foo"), [], Block([ModAssignment(Identifier("var"), Integer(5))]))})),
+         Program({"foo": Function(Identifier("foo", lineno=1), [],
+                                  Block([ModAssignment(Identifier("var", lineno=1), Integer(5, lineno=1), lineno=1)],
+                                        lineno=1), lineno=1)}, lineno=1)),
     ])
     def test_try_parse_assignment(self, case, expect):
         # GIVEN
@@ -132,15 +157,24 @@ class TestParser(unittest.TestCase):
 
     @parameterized.expand([
         ("foo(){return;}",
-         Program({"foo": Function(Identifier("foo"), [], Block([ReturnStatement([])]))})),
+         Program({"foo": Function(Identifier("foo", lineno=1), [], Block([ReturnStatement([], lineno=1)], lineno=1),
+                                  lineno=1)}, lineno=1)),
         ("foo(){return a;}",
-         Program({"foo": Function(Identifier("foo"), [], Block([ReturnStatement([Identifier("a")])]))})),
+         Program({"foo": Function(Identifier("foo", lineno=1), [],
+                                  Block([ReturnStatement([Identifier("a", lineno=1)], lineno=1)], lineno=1), lineno=1)},
+                 1)),
         ("foo(){return a, b;}",
          Program(
-             {"foo": Function(Identifier("foo"), [], Block([ReturnStatement([Identifier("a"), Identifier("b")])]))})),
+             {"foo": Function(Identifier("foo", lineno=1), [],
+                              Block([ReturnStatement([Identifier("a", lineno=1), Identifier("b", lineno=1)], lineno=1)],
+                                    lineno=1), lineno=1)}, lineno=1)),
         ("foo(){return a, b + c - 2;}",
-         Program({"foo": Function(Identifier("foo"), [], Block([
-             ReturnStatement([Identifier("a"), SubExpr(AddExpr(Identifier("b"), Identifier("c")), Integer(2))])]))})),
+         Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
+             ReturnStatement(
+                 [Identifier("a", lineno=1),
+                  SubExpr(AddExpr(Identifier("b", lineno=1), Identifier("c", lineno=1), lineno=1), Integer(2, lineno=1),
+                          lineno=1)],
+                 1)], lineno=1), lineno=1)}, lineno=1)),
     ])
     def test_try_parse_return_statement(self, case, expect):
         # GIVEN
@@ -156,14 +190,15 @@ class TestParser(unittest.TestCase):
 
     @parameterized.expand([
         ("foo(){if(true) a += 1;}",
-         Program({"foo": Function(Identifier("foo"), [], Block([
-             IfStatement(Boolean(True), Block([AddAssignment(Identifier("a"), Integer(1))]),
-                         [], None)]))})),
+         Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
+             IfStatement(Boolean(True, lineno=1),
+                         Block([AddAssignment(Identifier("a", lineno=1), Integer(1, lineno=1), lineno=1)], lineno=1),
+                         [], None, lineno=1)], lineno=1), lineno=1)}, lineno=1)),
         ("foo(){if(a > b){a += 1;}}",
-         Program({"foo": Function(Identifier("foo"), [], Block([
-             IfStatement(GreaterExpr(Identifier("a"), Identifier("b")),
-                         Block([AddAssignment(Identifier("a"), Integer(1))]),
-                         [], None)]))})),
+         Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
+             IfStatement(GreaterExpr(Identifier("a", lineno=1), Identifier("b", lineno=1), lineno=1),
+                         Block([AddAssignment(Identifier("a", lineno=1), Integer(1, lineno=1), lineno=1)], lineno=1),
+                         [], None, lineno=1)], lineno=1), lineno=1)}, lineno=1)),
     ])
     def test_try_parse_if_statement(self, case, expect):
         # GIVEN
@@ -179,28 +214,38 @@ class TestParser(unittest.TestCase):
 
     @parameterized.expand([
         ("foo(){if(a > b){a += 1;} elif(c and d){e += 1;}}",
-         Program({"foo": Function(Identifier("foo"), [], Block([
-             IfStatement(GreaterExpr(Identifier("a"), Identifier("b")),
-                         Block([AddAssignment(Identifier("a"), Integer(1))]),
-                         [ElifBlock(AndExpr(Identifier("c"), Identifier("d")),
-                                    Block([AddAssignment(Identifier("e"), Integer(1))]))], None)]))})),
+         Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
+             IfStatement(GreaterExpr(Identifier("a", lineno=1), Identifier("b", lineno=1), lineno=1),
+                         Block([AddAssignment(Identifier("a", lineno=1), Integer(1, lineno=1), lineno=1)], lineno=1),
+                         [ElifBlock(AndExpr(Identifier("c", lineno=1), Identifier("d", lineno=1), lineno=1),
+                                    Block([AddAssignment(Identifier("e", lineno=1), Integer(1, lineno=1), lineno=1)],
+                                          lineno=1), lineno=1)], None, lineno=1)], lineno=1),
+                                  1)}, lineno=1)),
         ("foo(){if(a > b){a += 1;} elif(c and d){e += 1;} elif(d or f){e = 1;}}",
-         Program({"foo": Function(Identifier("foo"), [], Block([
-             IfStatement(GreaterExpr(Identifier("a"), Identifier("b")),
-                         Block([AddAssignment(Identifier("a"), Integer(1))]),
-                         [ElifBlock(AndExpr(Identifier("c"), Identifier("d")),
-                                    Block([AddAssignment(Identifier("e"), Integer(1))])),
-                          ElifBlock(OrExpr(Identifier("d"), Identifier("f")),
-                                    Block([BasicAssignment(Identifier("e"), Integer(1))]))], None)]))})),
+         Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
+             IfStatement(GreaterExpr(Identifier("a", lineno=1), Identifier("b", lineno=1), lineno=1),
+                         Block([AddAssignment(Identifier("a", lineno=1), Integer(1, lineno=1), lineno=1)], lineno=1),
+                         [ElifBlock(AndExpr(Identifier("c", lineno=1), Identifier("d", lineno=1), lineno=1),
+                                    Block([AddAssignment(Identifier("e", lineno=1), Integer(1, lineno=1), lineno=1)],
+                                          lineno=1), lineno=1),
+                          ElifBlock(OrExpr(Identifier("d", lineno=1), Identifier("f", lineno=1), lineno=1),
+                                    Block([BasicAssignment(Identifier("e", lineno=1), Integer(1, lineno=1), lineno=1)],
+                                          lineno=1), lineno=1)], None, lineno=1)],
+             1), lineno=1)}, lineno=1)),
         ("foo(){if(a > b){a += 1;} elif(c and d){e += 1;} elif(d or f){e = 1;} else{print(a);}}",
-         Program({"foo": Function(Identifier("foo"), [], Block([
-             IfStatement(GreaterExpr(Identifier("a"), Identifier("b")),
-                         Block([AddAssignment(Identifier("a"), Integer(1))]),
-                         [ElifBlock(AndExpr(Identifier("c"), Identifier("d")),
-                                    Block([AddAssignment(Identifier("e"), Integer(1))])),
-                          ElifBlock(OrExpr(Identifier("d"), Identifier("f")),
-                                    Block([BasicAssignment(Identifier("e"), Integer(1))]))],
-                         ElseBlock(Block([FunCall(Identifier("print"), [Identifier("a")])])))]))})),
+         Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
+             IfStatement(GreaterExpr(Identifier("a", lineno=1), Identifier("b", lineno=1), lineno=1),
+                         Block([AddAssignment(Identifier("a", lineno=1), Integer(1, lineno=1), lineno=1)], lineno=1),
+                         [ElifBlock(AndExpr(Identifier("c", lineno=1), Identifier("d", lineno=1), lineno=1),
+                                    Block([AddAssignment(Identifier("e", lineno=1), Integer(1, lineno=1), lineno=1)],
+                                          lineno=1), lineno=1),
+                          ElifBlock(OrExpr(Identifier("d", lineno=1), Identifier("f", lineno=1), lineno=1),
+                                    Block([BasicAssignment(Identifier("e", lineno=1), Integer(1, lineno=1), lineno=1)],
+                                          lineno=1), lineno=1)],
+                         ElseBlock(
+                             Block([FunCall(Identifier("print", lineno=1), [Identifier("a", lineno=1)], lineno=1)],
+                                   lineno=1), lineno=1), lineno=1)], lineno=1),
+                                  1)}, lineno=1)),
     ])
     def test_try_parse_elif_block(self, case, expect):
         # GIVEN
@@ -216,20 +261,28 @@ class TestParser(unittest.TestCase):
 
     @parameterized.expand([
         ("foo(){if(a > b){a += 1;} else{print(a);}}",
-         Program({"foo": Function(Identifier("foo"), [], Block([
-             IfStatement(GreaterExpr(Identifier("a"), Identifier("b")),
-                         Block([AddAssignment(Identifier("a"), Integer(1))]),
+         Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
+             IfStatement(GreaterExpr(Identifier("a", lineno=1), Identifier("b", lineno=1), lineno=1),
+                         Block([AddAssignment(Identifier("a", lineno=1), Integer(1, lineno=1), lineno=1)], lineno=1),
                          [],
-                         ElseBlock(Block([FunCall(Identifier("print"), [Identifier("a")])])))]))})),
+                         ElseBlock(
+                             Block([FunCall(Identifier("print", lineno=1), [Identifier("a", lineno=1)], lineno=1)],
+                                   lineno=1), lineno=1), lineno=1)], lineno=1),
+                                  1)}, lineno=1)),
         ("foo(){if(a > b){a += 1;} elif(c and d){e += 1;} elif(d or f){e = 1;} else{print(a);}}",
-         Program({"foo": Function(Identifier("foo"), [], Block([
-             IfStatement(GreaterExpr(Identifier("a"), Identifier("b")),
-                         Block([AddAssignment(Identifier("a"), Integer(1))]),
-                         [ElifBlock(AndExpr(Identifier("c"), Identifier("d")),
-                                    Block([AddAssignment(Identifier("e"), Integer(1))])),
-                          ElifBlock(OrExpr(Identifier("d"), Identifier("f")),
-                                    Block([BasicAssignment(Identifier("e"), Integer(1))]))],
-                         ElseBlock(Block([FunCall(Identifier("print"), [Identifier("a")])])))]))})),
+         Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
+             IfStatement(GreaterExpr(Identifier("a", lineno=1), Identifier("b", lineno=1), lineno=1),
+                         Block([AddAssignment(Identifier("a", lineno=1), Integer(1, lineno=1), lineno=1)], lineno=1),
+                         [ElifBlock(AndExpr(Identifier("c", lineno=1), Identifier("d", lineno=1), lineno=1),
+                                    Block([AddAssignment(Identifier("e", lineno=1), Integer(1, lineno=1), lineno=1)],
+                                          lineno=1), lineno=1),
+                          ElifBlock(OrExpr(Identifier("d", lineno=1), Identifier("f", lineno=1), lineno=1),
+                                    Block([BasicAssignment(Identifier("e", lineno=1), Integer(1, lineno=1), lineno=1)],
+                                          lineno=1), lineno=1)],
+                         ElseBlock(
+                             Block([FunCall(Identifier("print", lineno=1), [Identifier("a", lineno=1)], lineno=1)],
+                                   lineno=1), lineno=1), lineno=1)], lineno=1),
+                                  1)}, lineno=1)),
     ])
     def test_try_parse_else_block(self, case, expect):
         # GIVEN
@@ -245,13 +298,15 @@ class TestParser(unittest.TestCase):
 
     @parameterized.expand([
         ("foo(){for(a in b)print(a);}",
-         Program({"foo": Function(Identifier("foo"), [], Block([
-             ForStatement(Identifier("a"), Identifier("b"),
-                          Block([FunCall(Identifier("print"), [Identifier("a")])]))]))})),
+         Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
+             ForStatement(Identifier("a", lineno=1), Identifier("b", lineno=1),
+                          Block([FunCall(Identifier("print", lineno=1), [Identifier("a", lineno=1)], lineno=1)],
+                                lineno=1), lineno=1)], lineno=1), lineno=1)}, lineno=1)),
         ("foo(){for(a in b){print(a);}}",
-         Program({"foo": Function(Identifier("foo"), [], Block([
-             ForStatement(Identifier("a"), Identifier("b"),
-                          Block([FunCall(Identifier("print"), [Identifier("a")])]))]))})),
+         Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
+             ForStatement(Identifier("a", lineno=1), Identifier("b", lineno=1),
+                          Block([FunCall(Identifier("print", lineno=1), [Identifier("a", lineno=1)], lineno=1)],
+                                lineno=1), lineno=1)], lineno=1), lineno=1)}, lineno=1)),
     ])
     def test_try_parse_for_statement(self, case, expect):
         # GIVEN
@@ -267,13 +322,15 @@ class TestParser(unittest.TestCase):
 
     @parameterized.expand([
         ("foo(){while(a and b)print(a);}",
-         Program({"foo": Function(Identifier("foo"), [], Block([
-             WhileStatement(AndExpr(Identifier("a"), Identifier("b")),
-                            Block([FunCall(Identifier("print"), [Identifier("a")])]))]))})),
+         Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
+             WhileStatement(AndExpr(Identifier("a", lineno=1), Identifier("b", lineno=1), lineno=1),
+                            Block([FunCall(Identifier("print", lineno=1), [Identifier("a", lineno=1)], lineno=1)],
+                                  lineno=1), lineno=1)], lineno=1), lineno=1)}, lineno=1)),
         ("foo(){while(true){print(a);}}",
-         Program({"foo": Function(Identifier("foo"), [], Block([
-             WhileStatement(Boolean(True),
-                            Block([FunCall(Identifier("print"), [Identifier("a")])]))]))})),
+         Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
+             WhileStatement(Boolean(True, lineno=1),
+                            Block([FunCall(Identifier("print", lineno=1), [Identifier("a", lineno=1)], lineno=1)],
+                                  lineno=1), lineno=1)], lineno=1), lineno=1)}, lineno=1)),
     ])
     def test_try_parse_while_statement(self, case, expect):
         # GIVEN
@@ -289,14 +346,15 @@ class TestParser(unittest.TestCase):
 
     @parameterized.expand([
         ("foo(){a = -a and b or c - 2 * 3 and (b or not g);}",
-         Program({"foo": Function(Identifier("foo"), [], Block([
+         Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
              BasicAssignment(
-                 Identifier("a"),
-                 OrExpr(AndExpr(InvertExpr(Identifier("a")), Identifier("b")),
+                 Identifier("a", lineno=1),
+                 OrExpr(AndExpr(InvertExpr(Identifier("a", lineno=1)), Identifier("b", lineno=1), lineno=1),
                         AndExpr(
-                            SubExpr(Identifier("c"),
-                                    MulExpr(Integer(2), Integer(3))),
-                            OrExpr(Identifier("b"), Negate(Identifier("g"))))))]))})),
+                            SubExpr(Identifier("c", lineno=1),
+                                    MulExpr(Integer(2, lineno=1), Integer(3, lineno=1), lineno=1), lineno=1),
+                            OrExpr(Identifier("b", lineno=1), Negate(Identifier("g", lineno=1), lineno=1), lineno=1),
+                            lineno=1), lineno=1), lineno=1)], lineno=1), lineno=1)}, lineno=1)),
     ])
     def test_try_parse_expression(self, case, expect):
         # GIVEN
@@ -312,9 +370,10 @@ class TestParser(unittest.TestCase):
 
     @parameterized.expand([
         ("foo(){a = c or b;}",
-         Program({"foo": Function(Identifier("foo"), [],
-                                  Block(
-                                      [BasicAssignment(Identifier("a"), OrExpr(Identifier("c"), Identifier("b")))]))})),
+         Program({"foo": Function(Identifier("foo", lineno=1), [], Block(
+             [BasicAssignment(Identifier("a", lineno=1),
+                              OrExpr(Identifier("c", lineno=1), Identifier("b", lineno=1), lineno=1), lineno=1)],
+             lineno=1), lineno=1)}, lineno=1)),
     ])
     def test_try_parse_or_expr(self, case, expect):
         # GIVEN
@@ -330,9 +389,12 @@ class TestParser(unittest.TestCase):
 
     @parameterized.expand([
         ("foo(){a = c and b;}",
-         Program({"foo": Function(Identifier("foo"), [],
-                                  Block([BasicAssignment(Identifier("a"),
-                                                         AndExpr(Identifier("c"), Identifier("b")))]))})),
+         Program({"foo": Function(Identifier("foo", lineno=1), [], Block([BasicAssignment(Identifier("a", lineno=1),
+                                                                                          AndExpr(
+                                                                                              Identifier("c", lineno=1),
+                                                                                              Identifier("b", lineno=1),
+                                                                                              lineno=1), lineno=1)],
+                                                                         1), lineno=1)}, lineno=1)),
     ])
     def test_try_parse_and_expr(self, case, expect):
         # GIVEN
@@ -348,8 +410,11 @@ class TestParser(unittest.TestCase):
 
     @parameterized.expand([
         ("foo(){a = not b;}",
-         Program({"foo": Function(Identifier("foo"), [],
-                                  Block([BasicAssignment(Identifier("a"), Negate(Identifier("b")))]))})),
+         Program({"foo": Function(Identifier("foo", lineno=1), [],
+                                  Block([BasicAssignment(Identifier("a", lineno=1),
+                                                         Negate(Identifier("b", lineno=1), lineno=1), lineno=1)],
+                                        lineno=1),
+                                  1)}, lineno=1)),
     ])
     def test_try_parse_negate_expr(self, case, expect):
         # GIVEN
@@ -364,20 +429,37 @@ class TestParser(unittest.TestCase):
         self.assertEqual(expect, program, f"Negate expression not parsed: {case}")
 
     @parameterized.expand([
-        ("foo(){a = b == c;}", Program({"foo": Function(Identifier("foo"), [], Block([
-            BasicAssignment(Identifier("a"), EqExpr(Identifier("b"), Identifier("c")))]))})),
-        ("foo(){a = b != c;}", Program({"foo": Function(Identifier("foo"), [], Block([
-            BasicAssignment(Identifier("a"), NotEqExpr(Identifier("b"), Identifier("c")))]))})),
-        ("foo(){a = b > c;}", Program({"foo": Function(Identifier("foo"), [], Block([
-            BasicAssignment(Identifier("a"), GreaterExpr(Identifier("b"), Identifier("c")))]))})),
-        ("foo(){a = b < c;}", Program({"foo": Function(Identifier("foo"), [], Block([
-            BasicAssignment(Identifier("a"), LessExpr(Identifier("b"), Identifier("c")))]))})),
-        ("foo(){a = b >= c;}", Program({"foo": Function(Identifier("foo"), [], Block([
-            BasicAssignment(Identifier("a"), GreaterEqExpr(Identifier("b"), Identifier("c")))]))})),
-        ("foo(){a = b <= c;}", Program({"foo": Function(Identifier("foo"), [], Block([
-            BasicAssignment(Identifier("a"), LessEqExpr(Identifier("b"), Identifier("c")))]))})),
-        ("foo(){a = b in c;}", Program({"foo": Function(Identifier("foo"), [], Block([
-            BasicAssignment(Identifier("a"), InExpr(Identifier("b"), Identifier("c")))]))})),
+        ("foo(){a = b == c;}", Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
+            BasicAssignment(Identifier("a", lineno=1),
+                            EqExpr(Identifier("b", lineno=1), Identifier("c", lineno=1), lineno=1), lineno=1)],
+            lineno=1), lineno=1)}, lineno=1)),
+        ("foo(){a = b != c;}", Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
+            BasicAssignment(Identifier("a", lineno=1),
+                            NotEqExpr(Identifier("b", lineno=1), Identifier("c", lineno=1), lineno=1), lineno=1)],
+            lineno=1), lineno=1)}, lineno=1)),
+        ("foo(){a = b > c;}", Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
+            BasicAssignment(Identifier("a", lineno=1),
+                            GreaterExpr(Identifier("b", lineno=1), Identifier("c", lineno=1), lineno=1), lineno=1)],
+            lineno=1), lineno=1)},
+                                      1)),
+        ("foo(){a = b < c;}", Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
+            BasicAssignment(Identifier("a", lineno=1),
+                            LessExpr(Identifier("b", lineno=1), Identifier("c", lineno=1), lineno=1), lineno=1)],
+            lineno=1), lineno=1)}, lineno=1)),
+        ("foo(){a = b >= c;}", Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
+            BasicAssignment(Identifier("a", lineno=1),
+                            GreaterEqExpr(Identifier("b", lineno=1), Identifier("c", lineno=1), lineno=1), lineno=1)],
+            lineno=1), lineno=1)},
+                                       1)),
+        ("foo(){a = b <= c;}", Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
+            BasicAssignment(Identifier("a", lineno=1),
+                            LessEqExpr(Identifier("b", lineno=1), Identifier("c", lineno=1), lineno=1), lineno=1)],
+            lineno=1), lineno=1)},
+                                       1)),
+        ("foo(){a = b in c;}", Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
+            BasicAssignment(Identifier("a", lineno=1),
+                            InExpr(Identifier("b", lineno=1), Identifier("c", lineno=1), lineno=1), lineno=1)],
+            lineno=1), lineno=1)}, lineno=1)),
     ])
     def test_try_parse_comp_expr(self, case, expect):
         # GIVEN
@@ -392,12 +474,19 @@ class TestParser(unittest.TestCase):
         self.assertEqual(expect, program, f"Comp expression not parsed: {case}")
 
     @parameterized.expand([
-        ("foo(){a = b + c;}", Program({"foo": Function(Identifier("foo"), [], Block([
-            BasicAssignment(Identifier("a"), AddExpr(Identifier("b"), Identifier("c")))]))})),
-        ("foo(){a = b - c;}", Program({"foo": Function(Identifier("foo"), [], Block([
-            BasicAssignment(Identifier("a"), SubExpr(Identifier("b"), Identifier("c")))]))})),
-        ("foo(){a = b + c - d;}", Program({"foo": Function(Identifier("foo"), [], Block([
-            BasicAssignment(Identifier("a"), SubExpr(AddExpr(Identifier("b"), Identifier("c")), Identifier("d")))]))})),
+        ("foo(){a = b + c;}", Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
+            BasicAssignment(Identifier("a", lineno=1),
+                            AddExpr(Identifier("b", lineno=1), Identifier("c", lineno=1), lineno=1), lineno=1)],
+            lineno=1), lineno=1)}, lineno=1)),
+        ("foo(){a = b - c;}", Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
+            BasicAssignment(Identifier("a", lineno=1),
+                            SubExpr(Identifier("b", lineno=1), Identifier("c", lineno=1), lineno=1), lineno=1)],
+            lineno=1), lineno=1)}, lineno=1)),
+        ("foo(){a = b + c - d;}", Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
+            BasicAssignment(Identifier("a", lineno=1),
+                            SubExpr(AddExpr(Identifier("b", lineno=1), Identifier("c", lineno=1), lineno=1),
+                                    Identifier("d", lineno=1), lineno=1), lineno=1)], lineno=1),
+                                                           1)}, lineno=1)),
     ])
     def test_try_parse_sum_expr(self, case, expect):
         # GIVEN
@@ -412,14 +501,23 @@ class TestParser(unittest.TestCase):
         self.assertEqual(expect, program, f"Sum expression not parsed: {case}")
 
     @parameterized.expand([
-        ("foo(){a = b * c;}", Program({"foo": Function(Identifier("foo"), [], Block([
-            BasicAssignment(Identifier("a"), MulExpr(Identifier("b"), Identifier("c")))]))})),
-        ("foo(){a = b / c;}", Program({"foo": Function(Identifier("foo"), [], Block([
-            BasicAssignment(Identifier("a"), DivExpr(Identifier("b"), Identifier("c")))]))})),
-        ("foo(){a = b % c;}", Program({"foo": Function(Identifier("foo"), [], Block([
-            BasicAssignment(Identifier("a"), ModExpr(Identifier("b"), Identifier("c")))]))})),
-        ("foo(){a = b // c;}", Program({"foo": Function(Identifier("foo"), [], Block([
-            BasicAssignment(Identifier("a"), IntDivExpr(Identifier("b"), Identifier("c")))]))})),
+        ("foo(){a = b * c;}", Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
+            BasicAssignment(Identifier("a", lineno=1),
+                            MulExpr(Identifier("b", lineno=1), Identifier("c", lineno=1), lineno=1), lineno=1)],
+            lineno=1), lineno=1)}, lineno=1)),
+        ("foo(){a = b / c;}", Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
+            BasicAssignment(Identifier("a", lineno=1),
+                            DivExpr(Identifier("b", lineno=1), Identifier("c", lineno=1), lineno=1), lineno=1)],
+            lineno=1), lineno=1)}, lineno=1)),
+        ("foo(){a = b % c;}", Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
+            BasicAssignment(Identifier("a", lineno=1),
+                            ModExpr(Identifier("b", lineno=1), Identifier("c", lineno=1), lineno=1), lineno=1)],
+            lineno=1), lineno=1)}, lineno=1)),
+        ("foo(){a = b // c;}", Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
+            BasicAssignment(Identifier("a", lineno=1),
+                            IntDivExpr(Identifier("b", lineno=1), Identifier("c", lineno=1), lineno=1), lineno=1)],
+            lineno=1), lineno=1)},
+                                       1)),
     ])
     def test_try_parse_mul_expr(self, case, expect):
         # GIVEN
@@ -434,8 +532,11 @@ class TestParser(unittest.TestCase):
         self.assertEqual(expect, program, f"Mul expression not parsed: {case}")
 
     @parameterized.expand([
-        ("foo(){a = b.c;}", Program({"foo": Function(Identifier("foo"), [], Block([
-            BasicAssignment(Identifier("a"), DotOperator(Identifier("b"), Identifier("c")))]))})),
+        ("foo(){a = b.c;}", Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
+            BasicAssignment(Identifier("a", lineno=1),
+                            DotOperator(Identifier("b", lineno=1), Identifier("c", lineno=1), lineno=1), lineno=1)],
+            lineno=1), lineno=1)},
+                                    1)),
     ])
     def test_try_parse_dot_operator(self, case, expect):
         # GIVEN
@@ -450,8 +551,9 @@ class TestParser(unittest.TestCase):
         self.assertEqual(expect, program, f"Dot operator not parsed: {case}")
 
     @parameterized.expand([
-        ("foo(){a = b();}", Program({"foo": Function(Identifier("foo"), [], Block([
-            BasicAssignment(Identifier("a"), FunCall(Identifier("b"), []))]))})),
+        ("foo(){a = b();}", Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
+            BasicAssignment(Identifier("a", lineno=1), FunCall(Identifier("b", lineno=1), [], lineno=1), lineno=1)],
+            lineno=1), lineno=1)}, lineno=1)),
     ])
     def test_try_parse_fun_call(self, case, expect):
         # GIVEN
@@ -466,9 +568,12 @@ class TestParser(unittest.TestCase):
         self.assertEqual(expect, program, f"Function call not parsed: {case}")
 
     @parameterized.expand([
-        ("foo(){a = b(a, b, 5);}", Program({"foo": Function(Identifier("foo"), [], Block([
-            BasicAssignment(Identifier("a"), FunCall(Identifier("b"), [Identifier("a"), Identifier("b"), Integer(5)]))
-        ]))})),
+        ("foo(){a = b(a, b, 5);}", Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
+            BasicAssignment(Identifier("a", lineno=1),
+                            FunCall(Identifier("b", lineno=1),
+                                    [Identifier("a", lineno=1), Identifier("b", lineno=1), Integer(5, lineno=1)],
+                                    lineno=1), lineno=1)
+        ], lineno=1), lineno=1)}, lineno=1)),
     ])
     def test_try_parse_arguments(self, case, expect):
         # GIVEN
@@ -483,8 +588,10 @@ class TestParser(unittest.TestCase):
         self.assertEqual(expect, program, f"Function arguments not parsed: {case}")
 
     @parameterized.expand([
-        ("foo(){a = b[1];}", Program({"foo": Function(Identifier("foo"), [], Block([
-            BasicAssignment(Identifier("a"), ListElement(Identifier("b"), Integer(1)))]))})),
+        ("foo(){a = b[1];}", Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
+            BasicAssignment(Identifier("a", lineno=1),
+                            ListElement(Identifier("b", lineno=1), Integer(1, lineno=1), lineno=1), lineno=1)],
+            lineno=1), lineno=1)}, lineno=1)),
     ])
     def test_try_parse_list_element(self, case, expect):
         # GIVEN
@@ -500,8 +607,11 @@ class TestParser(unittest.TestCase):
 
     @parameterized.expand([
         ("foo(){a = (a - 5) * 2;}",
-         Program({"foo": Function(Identifier("foo"), [], Block([
-             BasicAssignment(Identifier("a"), MulExpr(SubExpr(Identifier("a"), Integer(5)), Integer(2)))]))})),
+         Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
+             BasicAssignment(Identifier("a", lineno=1),
+                             MulExpr(SubExpr(Identifier("a", lineno=1), Integer(5, lineno=1), lineno=1),
+                                     Integer(2, lineno=1), lineno=1), lineno=1)], lineno=1), lineno=1)},
+                 1)),
     ])
     def test_try_parse_parenthesis(self, case, expect):
         # GIVEN
@@ -517,11 +627,15 @@ class TestParser(unittest.TestCase):
 
     @parameterized.expand([
         ("foo(){a = [1, 2, 3];}",
-         Program({"foo": Function(Identifier("foo"), [], Block([
-             BasicAssignment(Identifier("a"), List([Integer(1), Integer(2), Integer(3)]))]))})),
+         Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
+             BasicAssignment(Identifier("a", lineno=1),
+                             List([Integer(1, lineno=1), Integer(2, lineno=1), Integer(3, lineno=1)], lineno=1),
+                             lineno=1)], lineno=1), lineno=1)},
+                 1)),
         ("foo(){a = [];}",
-         Program({"foo": Function(Identifier("foo"), [], Block([
-             BasicAssignment(Identifier("a"), List([]))]))})),
+         Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
+             BasicAssignment(Identifier("a", lineno=1), List([], lineno=1), lineno=1)], lineno=1), lineno=1)},
+                 lineno=1)),
     ])
     def test_try_parse_list(self, case, expect):
         # GIVEN
@@ -537,23 +651,28 @@ class TestParser(unittest.TestCase):
 
     @parameterized.expand([
         ("foo(){a = \"test\";}",
-         Program({"foo": Function(Identifier("foo"), [], Block([
-             BasicAssignment(Identifier("a"), String("test"))]))})),
+         Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
+             BasicAssignment(Identifier("a", lineno=1), String("test", lineno=1), lineno=1)], lineno=1), lineno=1)},
+                 lineno=1)),
         ("foo(){a = 'test';}",
-         Program({"foo": Function(Identifier("foo"), [], Block([
-             BasicAssignment(Identifier("a"), String("test"))]))})),
+         Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
+             BasicAssignment(Identifier("a", lineno=1), String("test", lineno=1), lineno=1)], lineno=1), lineno=1)},
+                 lineno=1)),
         ("foo(){a = 25;}",
-         Program({"foo": Function(Identifier("foo"), [], Block([
-             BasicAssignment(Identifier("a"), Integer(25))]))})),
+         Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
+             BasicAssignment(Identifier("a", lineno=1), Integer(25, lineno=1), lineno=1)], lineno=1), lineno=1)},
+                 lineno=1)),
         ("foo(){a = true;}",
-         Program({"foo": Function(Identifier("foo"), [], Block([
-             BasicAssignment(Identifier("a"), Boolean(True))]))})),
+         Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
+             BasicAssignment(Identifier("a", lineno=1), Boolean(True, lineno=1), lineno=1)], lineno=1), lineno=1)},
+                 lineno=1)),
         ("foo(){a = false;}",
-         Program({"foo": Function(Identifier("foo"), [], Block([
-             BasicAssignment(Identifier("a"), Boolean(False))]))})),
+         Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
+             BasicAssignment(Identifier("a", lineno=1), Boolean(False, lineno=1), lineno=1)], lineno=1), lineno=1)},
+                 lineno=1)),
         ("foo(){a = null;}",
-         Program({"foo": Function(Identifier("foo"), [], Block([
-             BasicAssignment(Identifier("a"), Null())]))})),
+         Program({"foo": Function(Identifier("foo", lineno=1), [], Block([
+             BasicAssignment(Identifier("a", lineno=1), Null(1), lineno=1)], lineno=1), lineno=1)}, lineno=1)),
     ])
     def test_try_parse_atom(self, case, expect):
         # GIVEN
@@ -868,23 +987,39 @@ class TestParserErrorHandling(unittest.TestCase):
 
 class TestParserClasses(unittest.TestCase):
     @parameterized.expand([
-        (Identifier("a"),),
-        (Null(),),
-        (String("test"),),
-        (Atom(String("a")),),
-        (FunCall(Identifier("print"), List([Integer(2)])),),
-        (TwoSidedExpression(Identifier("a"), Integer(2)),),
-        (Block([FunCall(Identifier("print"), List([Integer(2)]))]),),
-        (WhileStatement(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))])),),
-        (ForStatement(Identifier("a"), Identifier("a"), Block([FunCall(Identifier("print"), List([Integer(2)]))])),),
-        (IfStatement(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))]),
-                     [ElifBlock(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))]))],
-                     ElseBlock(Block([FunCall(Identifier("print"), List([Integer(2)]))]))),),
-        (ReturnStatement([Identifier("a")]),),
-        (Assignment(Identifier("a"), Integer(2)),),
-        (Function(Identifier("a"), [Identifier("b")], Block([Assignment(Identifier("a"), Integer(2))])),),
+        (Identifier("a", lineno=1),),
+        (Null(1),),
+        (String("test", lineno=1),),
+        (Atom(String("a", lineno=1), lineno=1),),
+        (FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1), lineno=1),),
+        (TwoSidedExpression(Identifier("a", lineno=1), Integer(2, lineno=1), lineno=1),),
+        (Block([FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1), lineno=1)], lineno=1),),
+        (
+                WhileStatement(Boolean(True, lineno=1),
+                               Block([FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1),
+                                              lineno=1)], lineno=1), lineno=1),),
+        (ForStatement(Identifier("a", lineno=1), Identifier("a", lineno=1),
+                      Block([FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1), lineno=1)],
+                            lineno=1), lineno=1),),
+        (IfStatement(Boolean(True, lineno=1),
+                     Block([FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1), lineno=1)],
+                           lineno=1),
+                     [ElifBlock(Boolean(True, lineno=1),
+                                Block([FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1),
+                                               lineno=1)], lineno=1), lineno=1)],
+                     ElseBlock(Block(
+                         [FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1), lineno=1)],
+                         lineno=1), lineno=1), lineno=1),),
+        (ReturnStatement([Identifier("a", lineno=1)], lineno=1),),
+        (Assignment(Identifier("a", lineno=1), Integer(2, lineno=1), lineno=1),),
+        (
+                Function(Identifier("a", lineno=1), [Identifier("b", lineno=1)],
+                         Block([Assignment(Identifier("a", lineno=1), Integer(2, lineno=1), lineno=1)], lineno=1),
+                         1),),
         (Program(
-            {"a": Function(Identifier("a"), [Identifier("b")], Block([Assignment(Identifier("a"), Integer(2))]))}),),
+            {"a": Function(Identifier("a", lineno=1), [Identifier("b", lineno=1)],
+                           Block([Assignment(Identifier("a", lineno=1), Integer(2, lineno=1), lineno=1)], lineno=1),
+                           lineno=1)}, lineno=1),),
     ])
     def test_check_classes_repr(self, case):
         # GIVEN
@@ -898,78 +1033,174 @@ class TestParserClasses(unittest.TestCase):
         self.assertEqual(case, loc["new_object"], f"Class {case.__class__} has wrong __repr__.")
 
     @parameterized.expand([
-        (Atom(String("a")),),
-        (TwoSidedExpression(Identifier("a"), Integer(2)),),
-        (WhileStatement(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))])),),
-        (ForStatement(Identifier("a"), Identifier("a"), Block([FunCall(Identifier("print"), List([Integer(2)]))])),),
-        (IfStatement(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))]), []),),
-        (ElifBlock(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))])),),
-        (ElseBlock(Block([FunCall(Identifier("print"), List([Integer(2)]))])),),
-        (ReturnStatement([Identifier("a")]),),
-        (Assignment(Identifier("a"), Integer(2)),),
-        (Function(Identifier("a"), [Identifier("b")], Block([Assignment(Identifier("a"), Integer(2))])),),
+        (Atom(String("a", lineno=1), lineno=1),),
+        (TwoSidedExpression(Identifier("a", lineno=1), Integer(2, lineno=1), lineno=1),),
+        (
+                WhileStatement(Boolean(True, lineno=1), Block(
+                    [FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1), lineno=1)],
+                    lineno=1), lineno=1),),
+        (ForStatement(Identifier("a", lineno=1), Identifier("a", lineno=1),
+                      Block([FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1), lineno=1)],
+                            lineno=1), lineno=1),),
+        (IfStatement(Boolean(True, lineno=1),
+                     Block([FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1), lineno=1)],
+                           lineno=1), [], None,
+                     lineno=1),),
+        (ElifBlock(Boolean(True, lineno=1),
+                   Block([FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1), lineno=1)],
+                         lineno=1), lineno=1),),
+        (ElseBlock(
+            Block([FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1), lineno=1)], lineno=1),
+            lineno=1),),
+        (ReturnStatement([Identifier("a", lineno=1)], lineno=1),),
+        (Assignment(Identifier("a", lineno=1), Integer(2, lineno=1), lineno=1),),
+        (
+                Function(Identifier("a", lineno=1), [Identifier("b", lineno=1)],
+                         Block([Assignment(Identifier("a", lineno=1), Integer(2, lineno=1), lineno=1)], lineno=1),
+                         1),),
         (Program(
-            {"a": Function(Identifier("a"), [Identifier("b")], Block([Assignment(Identifier("a"), Integer(2))]))}),),
+            {"a": Function(Identifier("a", lineno=1), [Identifier("b", lineno=1)],
+                           Block([Assignment(Identifier("a", lineno=1), Integer(2, lineno=1), lineno=1)], lineno=1),
+                           lineno=1)}, lineno=1),),
     ])
     def test_check_objects_equality(self, case):
         self.assertEqual(case, case, f"Class {case.__class__} has wrong __eq__.")
 
     @parameterized.expand([
-        (Atom(String("a")),
-         Atom(String("b"))),
-        (TwoSidedExpression(Identifier("a"), Integer(2)),
-         TwoSidedExpression(Identifier("b"), Integer(2))),
-        (TwoSidedExpression(Identifier("a"), Integer(2)),
-         TwoSidedExpression(Identifier("a"), Integer(1))),
-        (WhileStatement(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))])),
-         WhileStatement(Boolean(False), Block([FunCall(Identifier("print"), List([Integer(2)]))]))),
-        (WhileStatement(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))])),
-         WhileStatement(Boolean(True), Block([TwoSidedExpression(Identifier("a"), Integer(2))]))),
-        (ForStatement(Identifier("a"), Identifier("a"), Block([FunCall(Identifier("print"), List([Integer(2)]))])),
-         ForStatement(Identifier("b"), Identifier("a"), Block([FunCall(Identifier("print"), List([Integer(2)]))]))),
-        (ForStatement(Identifier("a"), Identifier("a"), Block([FunCall(Identifier("print"), List([Integer(2)]))])),
-         ForStatement(Identifier("a"), Identifier("b"), Block([FunCall(Identifier("print"), List([Integer(2)]))]))),
-        (ForStatement(Identifier("a"), Identifier("a"), Block([FunCall(Identifier("print"), List([Integer(2)]))])),
-         ForStatement(Identifier("a"), Identifier("a"), Block([TwoSidedExpression(Identifier("a"), Integer(2))]))),
-        (IfStatement(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))]), []),
-         IfStatement(Boolean(False), Block([FunCall(Identifier("print"), List([Integer(2)]))]), [])),
-        (IfStatement(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))]), []),
-         IfStatement(Boolean(True), Block([TwoSidedExpression(Identifier("a"), Integer(2))]), [])),
-        (IfStatement(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))]), []),
-         IfStatement(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))]),
-                     [ElifBlock(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))]))])),
-        (IfStatement(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))]),
-                     [ElifBlock(Boolean(False), Block([FunCall(Identifier("print"), List([Integer(2)]))]))]),
-         IfStatement(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))]),
-                     [ElifBlock(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))]))])),
-        (IfStatement(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))]), []),
-         IfStatement(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))]), [],
-                     ElseBlock(Block([FunCall(Identifier("print"), List([Integer(2)]))])))),
-        (IfStatement(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))]), [],
-                     ElseBlock(Block([FunCall(Identifier("input"), List([String("test")]))]))),
-         IfStatement(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))]), [],
-                     ElseBlock(Block([FunCall(Identifier("print"), List([Integer(2)]))])))),
-        (ElifBlock(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))])),
-         ElifBlock(Boolean(False), Block([FunCall(Identifier("print"), List([Integer(2)]))]))),
-        (ElifBlock(Boolean(True), Block([FunCall(Identifier("print"), List([Integer(2)]))])),
-         ElifBlock(Boolean(True), Block([TwoSidedExpression(Identifier("a"), Integer(2))]))),
-        (ElseBlock(Block([FunCall(Identifier("print"), List([Integer(2)]))])),
-         ElseBlock(Block([TwoSidedExpression(Identifier("a"), Integer(2))]))),
-        (ReturnStatement([Identifier("a")]),
-         ReturnStatement([Identifier("b")])),
-        (Assignment(Identifier("a"), Integer(2)),
-         Assignment(Identifier("b"), Integer(2))),
-        (Assignment(Identifier("a"), Integer(2)),
-         Assignment(Identifier("a"), Integer(1))),
-        (Function(Identifier("a"), [Identifier("b")], Block([Assignment(Identifier("a"), Integer(2))])),
-         Function(Identifier("b"), [Identifier("b")], Block([Assignment(Identifier("a"), Integer(2))]))),
-        (Function(Identifier("a"), [Identifier("b")], Block([Assignment(Identifier("a"), Integer(2))])),
-         Function(Identifier("a"), [Identifier("c")], Block([Assignment(Identifier("a"), Integer(2))]))),
-        (Function(Identifier("a"), [Identifier("b")], Block([Assignment(Identifier("a"), Integer(2))])),
-         Function(Identifier("a"), [Identifier("b")], Block([FunCall(Identifier("print"), List([Integer(2)]))]))),
-        (Program({"a": Function(Identifier("a"), [Identifier("b")], Block([Assignment(Identifier("a"), Integer(2))]))}),
+        (Atom(String("a", lineno=1), lineno=1),
+         Atom(String("b", lineno=1), lineno=1)),
+        (TwoSidedExpression(Identifier("a", lineno=1), Integer(2, lineno=1), lineno=1),
+         TwoSidedExpression(Identifier("b", lineno=1), Integer(2, lineno=1), lineno=1)),
+        (TwoSidedExpression(Identifier("a", lineno=1), Integer(2, lineno=1), lineno=1),
+         TwoSidedExpression(Identifier("a", lineno=1), Integer(1, lineno=1), lineno=1)),
+        (WhileStatement(Boolean(True, lineno=1), Block(
+            [FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1), lineno=1)], lineno=1),
+                        lineno=1),
+         WhileStatement(Boolean(False, lineno=1), Block(
+             [FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1), lineno=1)], lineno=1),
+                        lineno=1)),
+        (WhileStatement(Boolean(True, lineno=1), Block(
+            [FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1), lineno=1)], lineno=1),
+                        lineno=1),
+         WhileStatement(Boolean(True, lineno=1),
+                        Block([TwoSidedExpression(Identifier("a", lineno=1), Integer(2, lineno=1), lineno=1)],
+                              lineno=1),
+                        lineno=1)),
+        (ForStatement(Identifier("a", lineno=1), Identifier("a", lineno=1),
+                      Block([FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1), lineno=1)],
+                            lineno=1), lineno=1),
+         ForStatement(Identifier("b", lineno=1), Identifier("a", lineno=1),
+                      Block([FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1), lineno=1)],
+                            lineno=1), lineno=1)),
+        (ForStatement(Identifier("a", lineno=1), Identifier("a", lineno=1),
+                      Block([FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1), lineno=1)],
+                            lineno=1), lineno=1),
+         ForStatement(Identifier("a", lineno=1), Identifier("b", lineno=1),
+                      Block([FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1), lineno=1)],
+                            lineno=1), lineno=1)),
+        (ForStatement(Identifier("a", lineno=1), Identifier("a", lineno=1),
+                      Block([FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1), lineno=1)],
+                            lineno=1), lineno=1),
+         ForStatement(Identifier("a", lineno=1), Identifier("a", lineno=1),
+                      Block([TwoSidedExpression(Identifier("a", lineno=1), Integer(2, lineno=1), lineno=1)], lineno=1),
+                      lineno=1)),
+        (IfStatement(Boolean(True, lineno=1),
+                     Block([FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1), lineno=1)],
+                           lineno=1), [], None, lineno=1),
+         IfStatement(Boolean(False, lineno=1),
+                     Block([FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1), lineno=1)],
+                           lineno=1), [], None, lineno=1)),
+        (IfStatement(Boolean(True, lineno=1),
+                     Block([FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1), lineno=1)],
+                           lineno=1), [], None, lineno=1),
+         IfStatement(Boolean(True, lineno=1),
+                     Block([TwoSidedExpression(Identifier("a", lineno=1), Integer(2, lineno=1), lineno=1)], lineno=1),
+                     [], None, lineno=1)),
+        (IfStatement(Boolean(True, lineno=1),
+                     Block([FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1), lineno=1)],
+                           lineno=1), [], None, lineno=1),
+         IfStatement(Boolean(True, lineno=1),
+                     Block([FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1), lineno=1)],
+                           lineno=1),
+                     [ElifBlock(Boolean(True, lineno=1), Block(
+                         [FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1), lineno=1)],
+                         lineno=1), lineno=1)], None, lineno=1)),
+        (IfStatement(Boolean(True, lineno=1),
+                     Block([FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1), lineno=1)],
+                           lineno=1),
+                     [ElifBlock(Boolean(False, lineno=1), Block(
+                         [FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1), lineno=1)],
+                         lineno=1), lineno=1)], None, lineno=1),
+         IfStatement(Boolean(True, lineno=1),
+                     Block([FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1), lineno=1)],
+                           lineno=1),
+                     [ElifBlock(Boolean(True, lineno=1), Block(
+                         [FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1), lineno=1)],
+                         lineno=1), lineno=1)], None, lineno=1)),
+        (IfStatement(Boolean(True, lineno=1),
+                     Block([FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1), lineno=1)],
+                           lineno=1), [], None, lineno=1),
+         IfStatement(Boolean(True, lineno=1),
+                     Block([FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1), lineno=1)],
+                           lineno=1), [],
+                     ElseBlock(Block(
+                         [FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1), lineno=1)],
+                         lineno=1), lineno=1), lineno=1)),
+        (IfStatement(Boolean(True, lineno=1),
+                     Block([FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1), lineno=1)],
+                           lineno=1), [],
+                     ElseBlock(Block(
+                         [FunCall(Identifier("input", lineno=1), List([String("test", lineno=1)], lineno=1), lineno=1)],
+                         lineno=1), lineno=1), lineno=1),
+         IfStatement(Boolean(True, lineno=1),
+                     Block([FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1), lineno=1)],
+                           lineno=1), [],
+                     ElseBlock(Block(
+                         [FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1), lineno=1)],
+                         lineno=1), lineno=1), lineno=1)),
+        (ElifBlock(Boolean(True, lineno=1),
+                   Block([FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1), lineno=1)],
+                         lineno=1), lineno=1),
+         ElifBlock(Boolean(False, lineno=1),
+                   Block([FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1), lineno=1)],
+                         lineno=1), lineno=1)),
+        (ElifBlock(Boolean(True, lineno=1),
+                   Block([FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1), lineno=1)],
+                         lineno=1), lineno=1),
+         ElifBlock(Boolean(True, lineno=1),
+                   Block([TwoSidedExpression(Identifier("a", lineno=1), Integer(2, lineno=1), lineno=1)], lineno=1),
+                   lineno=1)),
+        (ElseBlock(
+            Block([FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1), lineno=1)], lineno=1),
+            lineno=1),
+         ElseBlock(Block([TwoSidedExpression(Identifier("a", lineno=1), Integer(2, lineno=1), lineno=1)], lineno=1),
+                   lineno=1)),
+        (ReturnStatement([Identifier("a", lineno=1)], lineno=1),
+         ReturnStatement([Identifier("b", lineno=1)], lineno=1)),
+        (Assignment(Identifier("a", lineno=1), Integer(2, lineno=1), lineno=1),
+         Assignment(Identifier("b", lineno=1), Integer(2, lineno=1), lineno=1)),
+        (Assignment(Identifier("a", lineno=1), Integer(2, lineno=1), lineno=1),
+         Assignment(Identifier("a", lineno=1), Integer(1, lineno=1), lineno=1)),
+        (Function(Identifier("a", lineno=1), [Identifier("b", lineno=1)],
+                  Block([Assignment(Identifier("a", lineno=1), Integer(2, lineno=1), lineno=1)], lineno=1), lineno=1),
+         Function(Identifier("b", lineno=1), [Identifier("b", lineno=1)],
+                  Block([Assignment(Identifier("a", lineno=1), Integer(2, lineno=1), lineno=1)], lineno=1), lineno=1)),
+        (Function(Identifier("a", lineno=1), [Identifier("b", lineno=1)],
+                  Block([Assignment(Identifier("a", lineno=1), Integer(2, lineno=1), lineno=1)], lineno=1), lineno=1),
+         Function(Identifier("a", lineno=1), [Identifier("c", lineno=1)],
+                  Block([Assignment(Identifier("a", lineno=1), Integer(2, lineno=1), lineno=1)], lineno=1), lineno=1)),
+        (Function(Identifier("a", lineno=1), [Identifier("b", lineno=1)],
+                  Block([Assignment(Identifier("a", lineno=1), Integer(2, lineno=1), lineno=1)], lineno=1), lineno=1),
+         Function(Identifier("a", lineno=1), [Identifier("b", lineno=1)],
+                  Block([FunCall(Identifier("print", lineno=1), List([Integer(2, lineno=1)], lineno=1), lineno=1)],
+                        lineno=1), lineno=1)),
+        (Program({"a": Function(Identifier("a", lineno=1), [Identifier("b", lineno=1)],
+                                Block([Assignment(Identifier("a", lineno=1), Integer(2, lineno=1), lineno=1)],
+                                      lineno=1), lineno=1)}, lineno=1),
          Program(
-             {"b": Function(Identifier("b"), [Identifier("b")], Block([Assignment(Identifier("a"), Integer(2))]))})),
+             {"b": Function(Identifier("b", lineno=1), [Identifier("b", lineno=1)],
+                            Block([Assignment(Identifier("a", lineno=1), Integer(2, lineno=1), lineno=1)], lineno=1),
+                            lineno=1)}, lineno=1)),
     ])
     def test_check_objects_inequality(self, case, compare):
         self.assertNotEqual(compare, case, f"Class {case.__class__} has wrong __eq__.")
