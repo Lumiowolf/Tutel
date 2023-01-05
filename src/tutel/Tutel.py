@@ -11,6 +11,7 @@ class TutelOptions(NamedTuple):
     gui: Literal["vscode", "nock"] = "mock"
     verbose: bool = False
 
+
 class Tutel:
     def __init__(self, code: str, options: TutelOptions = TutelOptions()):
         self.code = code

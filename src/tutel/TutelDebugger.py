@@ -1,3 +1,5 @@
+import signal
+
 from tutel import Tutel, TutelOptions
 from tutel.ErrorHandlerModule.ErrorType import InterpreterException
 from tutel.InterpreterModule.Interpreter import Interpreter
@@ -45,6 +47,7 @@ class TutelDebugger(Tutel):
 
     def start(self):
         try:
+            signal.signal(signal.SIGINT, self.do_exit)
             while True:
                 self._do_command()
         except Exit:
@@ -66,7 +69,7 @@ class TutelDebugger(Tutel):
         lines = str.splitlines(self.code)
         for i in range(len(lines)):
             if not lines[i].split("#")[0].isspace():
-                result.add(i+1)
+                result.add(i + 1)
 
         return result
 
@@ -101,7 +104,7 @@ class TutelDebugger(Tutel):
 
     def stack_trace(self):
         print(f"Program stopped in function {self.interpreter.curr_frame.name} "
-              f"at lime {self.interpreter.curr_frame.lineno}")
+              f"at line {self.interpreter.curr_frame.lineno}")
         self._do_command()
 
     def post_morten(self):
@@ -148,7 +151,6 @@ class TutelDebugger(Tutel):
             else:
                 print("Program is already running, use command `restart` to restart it")
                 return
-
 
     @command("restart")
     def do_restart(self, *args):
@@ -241,24 +243,3 @@ class TutelDebugger(Tutel):
 
         except TypeError:
             print(f"Arguments of `clear` command should be integers")
-
-
-# Ustaw TutelDebugger jako domyślnego debuggera
-# bdb.Bdb.set_trace(TutelDebugger())
-
-# with open("../examples/example_1.tut") as file:
-#     code = file.read()
-TutelDebugger(code=
-"""main() {                         # 1
-    t=Turtle();                     # 2
-    t.forward(10);                  # 3
-    print('a');                     # 4
-    result = boo(12);               # 5
-    print("result: ", result);      # 6
-}                                   # 7
-                                    # 8
-boo(var) {                          # 9
-    print(var);                     # 10
-    return var + 1;                 # 11
-}                                   # 12
-""", options=TutelOptions(gui="vscode")).start()

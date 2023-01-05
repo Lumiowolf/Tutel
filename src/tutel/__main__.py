@@ -7,6 +7,7 @@ from time import sleep
 
 import tutel
 from tutel import Tutel, TutelOptions
+from tutel.TutelDebugger import TutelDebugger
 
 
 def get_arg_parser():
@@ -45,6 +46,12 @@ def get_arg_parser():
         default=False,
         action="store_true",
     )
+    arg_parser.add_argument(
+        "-d",
+        "--debug",
+        default=False,
+        action="store_true",
+    )
 
     return arg_parser
 
@@ -74,9 +81,15 @@ def main(filename: str | None = None, code: str | None = None, flags: tuple[str]
         args.filename = os.path.realpath(args.filename.name)
         with open(filename if filename is not None else args.filename, "r") as file:
             code = file.read()
-        Tutel(code=code, options=options).run()
+        if args.debug:
+            TutelDebugger(code=code, options=options).start()
+        else:
+            Tutel(code=code, options=options).run()
     elif hasattr(args, "code") and args.code:
-        Tutel(code=args.code, options=options).run()
+        if args.debug:
+            TutelDebugger(code=args.code, options=options).start()
+        else:
+            Tutel(code=args.code, options=options).run()
     else:
         print("Nothing to execute")
         exit(0)
