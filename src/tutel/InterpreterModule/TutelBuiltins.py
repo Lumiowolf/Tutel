@@ -11,8 +11,8 @@ def print(*args) -> None:
     builtins.print(*args)
 
 
-def input(prompt) -> str:
-    return builtins.input(prompt)
+def input(*args) -> str:
+    return builtins.input(*args)
 
 
 def sleep(sec: int) -> None:
