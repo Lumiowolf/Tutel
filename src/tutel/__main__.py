@@ -55,7 +55,6 @@ def get_arg_parser():
     arg_parser.add_argument(
         "-o",
         "--output",
-        type=int,
         required=False
     )
 
@@ -76,7 +75,7 @@ def main():
     options["verbose"] = args.verbose
 
     if args.output:
-        options["gui_fd"] = args.output
+        options["gui_out_path"] = args.output
 
     options = TutelOptions(**options)
 
