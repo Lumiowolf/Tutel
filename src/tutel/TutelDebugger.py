@@ -89,6 +89,9 @@ class TutelDebugger(Tutel):
             self.cmd(*self.cmd_args)
 
     def run(self):
+        if self.options.gui_out_path:
+            with open(self.options.gui_out_path, "w"):
+                pass
         try:
             self.interpreter.execute(self.program, "main")
         except InterpreterException:

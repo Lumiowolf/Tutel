@@ -7,8 +7,8 @@ from tutel.ErrorHandlerModule.ErrorType import MismatchedArgsCountException, Out
     BuiltinFunctionShadowException, TypeException
 from tutel.ErrorHandlerModule.ErrorType import NotIterableException, CannotAssignException, NotDefinedException, \
     UnsupportedOperandException, BadOperandForUnaryException, AttributeException
-from tutel.GuiModule.GuiInterface import GuiInterface
 from tutel.InterpreterModule import TutelBuiltins
+from tutel.InterpreterModule.Stack import Stack
 from tutel.InterpreterModule.StackFrame import StackFrame
 from tutel.InterpreterModule.Turtle.Turtle import Turtle
 from tutel.InterpreterModule.Value import Value
@@ -34,17 +34,9 @@ def update_lineno(func):
     return wrapper
 
 
-def set_gui(gui: GuiInterface):
-    Turtle.set_gui(gui)
-
-
-def set_verbose():
-    Turtle.gui.verbose = True
-
-
 class Interpreter:
     def __init__(self, error_handler_: ErrorHandler = None, debugger=None) -> None:
-        self.call_stack = []
+        self.call_stack = Stack()
         self.program_to_execute = None
         self.start_with_fun = None
         self.builtins = TutelBuiltins
@@ -57,7 +49,7 @@ class Interpreter:
 
         self.error_handler = error_handler_
         if self.error_handler is None:
-            self.error_handler = ErrorHandler(module="interpreter", stack=self.call_stack)
+            self.error_handler = ErrorHandler(module="interpreter")
         self.debugger = debugger
 
     @property
@@ -65,7 +57,7 @@ class Interpreter:
         return self.call_stack[-1]
 
     def clean_up(self):
-        self.call_stack = []
+        self.call_stack = Stack()
         self.program_to_execute = None
         self.start_with_fun = None
         self.builtins = TutelBuiltins
@@ -101,18 +93,18 @@ class Interpreter:
         self.program_to_execute = program_to_execute
         self.__lineno = program_to_execute.lineno
         if len(self.program_to_execute.functions) == 0:
-            self.error_handler.handle_error(NothingToRunException())
+            self.error_handler.handle_error(NothingToRunException(), self.call_stack)
         self._add_functions_to_globals(self.program_to_execute)
         if start_with_fun_name in self.program_to_execute.functions.keys():
             self.start_with_fun = start_with_fun_name
         elif start_with_fun_name is None:
             self.start_with_fun = list(self.program_to_execute.functions.keys())[0]
         else:
-            self.error_handler.handle_error(NotDefinedException(name=start_with_fun_name))
+            self.error_handler.handle_error(NotDefinedException(name=start_with_fun_name), self.call_stack)
         try:
             self.program_globals[self.start_with_fun].accept(self)
         except RecursionError:
-            self.error_handler.handle_error(RecursionException())
+            self.error_handler.handle_error(RecursionException(), self.call_stack)
 
     def _add_stack_frame(self, fname: str = None, lineno: int = None):
         self.call_stack.append(StackFrame(fname, lineno))
@@ -126,7 +118,7 @@ class Interpreter:
         for fun_name in program_.functions:
             if fun_name in self.program_globals:
                 self.error_handler.handle_error(
-                    BuiltinFunctionShadowException(fun_name=fun_name)
+                    BuiltinFunctionShadowException(fun_name=fun_name), self.call_stack
                 )
             else:
                 self.program_globals[fun_name] = program_.functions[fun_name]
@@ -134,7 +126,7 @@ class Interpreter:
     def _set_local_var(self, name: str, value: Value):
         if name in self.program_globals:
             self.error_handler.handle_error(
-                BuiltinFunctionShadowException(fun_name=name)
+                BuiltinFunctionShadowException(fun_name=name), self.call_stack
             )
         else:
             self.curr_frame.locals[name] = value
@@ -153,7 +145,7 @@ class Interpreter:
         if type(obj) == Classes.Identifier:
             identifier = obj.accept(self)
             if (value := self._get_builtin_global_or_local_var(identifier)) is None:
-                self.error_handler.handle_error(NotDefinedException(name=identifier))
+                self.error_handler.handle_error(NotDefinedException(name=identifier), self.call_stack)
         else:
             value = obj.accept(self)
         return value
@@ -176,7 +168,7 @@ class Interpreter:
                         expected_min=len(function.params),
                         expected_max=len(function.params),
                         got_number=len(self.function_args)
-                    )
+                    ), self.call_stack
                 )
             for arg, param in zip(self.function_args, function.params):
                 self._set_local_var(param.accept(self), arg)
@@ -242,7 +234,8 @@ class Interpreter:
                 if self.return_flag:
                     break
         except TypeError:
-            self.error_handler.handle_error(NotIterableException(type_name=type(iterable.value).__name__))
+            self.error_handler.handle_error(NotIterableException(type_name=type(iterable.value).__name__),
+                                            self.call_stack)
 
     @update_lineno
     def visit_while_statement(self, while_stmt: Classes.WhileStatement):
@@ -263,7 +256,7 @@ class Interpreter:
     @update_lineno
     def visit_basic_assignment(self, assignment: Classes.BasicAssignment):
         if not self._is_assignable(assignment.left_expr):
-            self.error_handler.handle_error(CannotAssignException(value=assignment.left_expr))
+            self.error_handler.handle_error(CannotAssignException(value=assignment.left_expr), self.call_stack)
         identifier = assignment.left_expr.accept(self)
         value = self._get_variable_or_instant_value(assignment.right_expr)
         if type(value) != Value:
@@ -281,17 +274,17 @@ class Interpreter:
         }
         identifier = assignment.left_expr.accept(self)
         if (variable := self._get_local_var(identifier)) is None:
-            self.error_handler.handle_error(NotDefinedException(name=identifier))
+            self.error_handler.handle_error(NotDefinedException(name=identifier), self.call_stack)
         else:
             value = self._get_variable_or_instant_value(assignment.right_expr)
             if type(value) != Value:
                 value = Value(value)
             try:
                 operators[assignment.operator](variable, value)
-            except TypeError:
+            except TypeError as e:
                 self.error_handler.handle_error(
                     UnsupportedOperandException(l_type=type(variable).__name__, r_type=type(value).__name__,
-                                                operator=assignment.operator)
+                                                operator=assignment.operator), self.call_stack
                 )
 
     @update_lineno
@@ -306,7 +299,7 @@ class Interpreter:
             result = operators[expr.operator](value)
         except TypeError:
             self.error_handler.handle_error(
-                BadOperandForUnaryException(type_name=type(value).__name__))
+                BadOperandForUnaryException(type_name=type(value).__name__), self.call_stack)
         return result
 
     @update_lineno
@@ -333,10 +326,10 @@ class Interpreter:
         result = None
         try:
             result = operators[expr.operator](left, right)
-        except (KeyError, TypeError):
+        except (KeyError, TypeError) as e:
             self.error_handler.handle_error(
                 UnsupportedOperandException(operator=expr.operator, l_type=type(left).__name__,
-                                            r_type=type(right).__name__))
+                                            r_type=type(right).__name__), self.call_stack)
         return result
 
     @update_lineno
@@ -347,7 +340,8 @@ class Interpreter:
         try:
             result = getattr(left, right)
         except AttributeError:
-            self.error_handler.handle_error(AttributeException(type_name=type(left.value).__name__, value=right))
+            self.error_handler.handle_error(AttributeException(type_name=type(left.value).__name__, value=right),
+                                            self.call_stack)
         return result
 
     @update_lineno
@@ -363,7 +357,7 @@ class Interpreter:
                 result = self.last_returned
                 return result
             except TypeError as err:
-                self.error_handler.handle_error(TypeException(err))
+                self.error_handler.handle_error(TypeException(err), self.call_stack)
         else:
             try:
                 result = function(*[arg.value for arg in arguments])
@@ -372,7 +366,7 @@ class Interpreter:
                 return result
             except TypeError as e:
                 self.error_handler.handle_error(
-                    TypeException(e)
+                    TypeException(e), self.call_stack
                 )
 
     @update_lineno
@@ -383,5 +377,5 @@ class Interpreter:
         try:
             result = list_[index.value]
         except IndexError:
-            self.error_handler.handle_error(OutOfRangeException())
+            self.error_handler.handle_error(OutOfRangeException(), self.call_stack)
         return result

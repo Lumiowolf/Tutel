@@ -1,7 +1,7 @@
 import math
 
-from tutel.GuiModule.GuiInterface import GuiInterface
-from tutel.GuiModule.GuiMock import GuiMock
+from tutel import GuiModule
+from tutel.GuiModule import GuiInterface
 from tutel.InterpreterModule.Turtle.Color import Color
 from tutel.InterpreterModule.Turtle.Orientation import Orientation
 from tutel.InterpreterModule.Turtle.Position import Position
@@ -10,7 +10,6 @@ from tutel.InterpreterModule.Turtle.Position import Position
 class Turtle:
     default_id = 0
     id = 0
-    gui: GuiInterface = GuiMock()
 
     def __init__(self):
         self.__color = Color(255, 0, 0)
@@ -21,18 +20,14 @@ class Turtle:
         Turtle.id += 1
 
     @classmethod
-    def set_gui(cls, gui: GuiInterface):
-        cls.gui = gui
-
-    @classmethod
     def turtle_init(cls) -> "Turtle | None":
         turtle = cls()
-        if cls.gui.add_turtle(
+        if GuiModule.GUI.add_turtle(
                 turtle_id=turtle.id,
                 color=turtle.color,
                 position=turtle.position,
                 orientation=turtle.orientation
-        ):
+        ) or type(GuiModule.GUI) == GuiInterface:
             return turtle
 
     @property
@@ -42,7 +37,7 @@ class Turtle:
     @color.setter
     def color(self, color: Color):
         if color is not None:
-            if self.gui.set_color(self.id, color):
+            if GuiModule.GUI.set_color(self.id, color) or type(GuiModule.GUI) == GuiInterface:
                 self.__color = color
 
     def set_color(self, color: Color):
@@ -58,7 +53,7 @@ class Turtle:
 
     def set_position(self, position: Position):
         if position is not None:
-            if self.gui.set_position(self.id, position):
+            if GuiModule.GUI.set_position(self.id, position) or type(GuiModule.GUI) == GuiInterface:
                 self.position = position
 
     @property
@@ -68,29 +63,32 @@ class Turtle:
     @orientation.setter
     def orientation(self, orientation: Orientation):
         if orientation is not None:
-            orientation = Orientation(int(orientation.angle % 360))
-            if self.gui.set_orientation(self.id, orientation):
+            orientation = Orientation(int(orientation % 360))
+            if GuiModule.GUI.set_orientation(self.id, orientation) or type(GuiModule.GUI) == GuiInterface:
                 self.__orientation = orientation
 
     def set_orientation(self, orientation: int):
         self.orientation = Orientation(orientation)
 
     def turn_left(self):
-        self.set_orientation(self.orientation.angle + 90)
+        self.set_orientation(self.orientation + 90)
 
     def turn_right(self):
-        self.set_orientation(self.orientation.angle - 90)
+        self.set_orientation(self.orientation - 90)
 
     def forward(self, a: int):
         if self.__init_state:
             self.__init_state = False
         if a is not None:
             new_position = Position(
-                x=self.position.x + math.sin((self.orientation.angle / 360) * 2 * math.pi) * a,
-                y=self.position.y + math.cos((self.orientation.angle / 360) * 2 * math.pi) * a
+                x=self.position.x + math.sin((self.orientation / 360) * 2 * math.pi) * a,
+                y=self.position.y + math.cos((self.orientation / 360) * 2 * math.pi) * a
             )
-            if self.gui.go_forward(self.id, new_position):
+            if GuiModule.GUI.go_forward(self.id, new_position) or type(GuiModule.GUI) == GuiInterface:
                 self.position = new_position
 
     def __repr__(self):
-        return f"<{self.__class__.__name__} at {hex(id(self))}>"
+        return "{" + f'"id": {self.id}, ' \
+                     f'"color": {self.color}, ' \
+                     f'"position": {self.position}, ' \
+                     f'"orientation": {self.orientation}' + "}"

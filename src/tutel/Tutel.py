@@ -1,14 +1,17 @@
 from io import StringIO
 from typing import Literal, NamedTuple
 
+import tutel
+from tutel import GuiModule
 from tutel.ErrorHandlerModule.ErrorType import LexerException, ParserException, InterpreterException
-from tutel.InterpreterModule.Interpreter import Interpreter, set_verbose, set_gui
+from tutel.InterpreterModule.Interpreter import Interpreter
 from tutel.LexerModule.Lexer import Lexer
 from tutel.ParserModule.Parser import Parser
 
 
 class TutelOptions(NamedTuple):
     gui: Literal["vscode", "nock"] = "mock"
+    gui_out_path: str = ""
     verbose: bool = False
 
 
@@ -22,6 +25,9 @@ class Tutel:
         self._prepare_to_run()
 
     def run(self):
+        if self.options.gui_out_path:
+            with open(self.options.gui_out_path, "w"):
+                pass
         try:
             self.interpreter.execute(self.program, "main")
         except InterpreterException:
@@ -37,6 +43,8 @@ class Tutel:
             exit(-3)
         if self.options.gui == "vscode":
             from tutel.GuiModule.GuiVsCode import GuiVsCode
-            set_gui(GuiVsCode())
+            GuiModule.GUI = GuiVsCode()
         if self.options.verbose is True:
-            set_verbose()
+            tutel.VERBOSE = True
+        if self.options.gui_out_path:
+            GuiModule.GUI_OUT = self.options.gui_out_path

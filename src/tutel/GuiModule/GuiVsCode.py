@@ -1,5 +1,7 @@
 import json
+import sys
 
+from tutel import GuiModule
 from tutel.GuiModule.GuiInterface import GuiInterface
 from tutel.InterpreterModule.Turtle.Color import Color
 from tutel.InterpreterModule.Turtle.Orientation import Orientation
@@ -7,7 +9,11 @@ from tutel.InterpreterModule.Turtle.Position import Position
 
 
 def _message(msg: str):
-    print(msg)
+    if GuiModule.GUI_OUT:
+        with open(GuiModule.GUI_OUT, "a") as f:
+            f.write(msg)
+    else:
+        sys.stdout.write(msg)
 
 
 def get_json(*objects):
@@ -18,7 +24,7 @@ def get_json(*objects):
 
 
 def create_request(method: str, id: int, body: str = "null"):
-    return "{" + f'"method": "{method}", "id": {id}, "body": {body}' + "}"
+    return "{" + f'"method": "{method}", "id": {id}, "body": {body}' + "}\n"
 
 
 class GuiVsCode(GuiInterface):
@@ -58,4 +64,3 @@ class GuiVsCode(GuiInterface):
         request = create_request(method="FORWARD", id=turtle_id, body=get_json(position))
         _message(request)
         return True
-

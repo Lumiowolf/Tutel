@@ -20,11 +20,10 @@ class Color:
         for el in [self.r, self.g, self.b]:
             yield el
 
-    def __str__(self) -> str:
-        return f"(R: {self.r}, G: {self.g}, B: {self.b})"
-
     def dict(self):
         return {"r": self.r, "g": self.g, "b": self.b}
 
-    def __repr__(self):
-        return f"<{self.__class__.__name__} at {hex(id(self))}>"
+    def __repr__(self) -> str:
+        return "{" + f'"r": {self.r}, ' \
+                     f'"g": {self.g}, ' \
+                     f'"b": {self.b}' + "}"

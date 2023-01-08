@@ -15,11 +15,9 @@ class Position:
         for el in [self.x, self.y]:
             yield el
 
-    def __str__(self) -> str:
-        return f"(X: {self.x}, Y: {self.y})"
-
     def dict(self):
         return {"x": self.x, "y": self.y}
 
-    def __repr__(self):
-        return f"<{self.__class__.__name__} at {hex(id(self))}>"
+    def __repr__(self) -> str:
+        return "{" + f'"x": {self.x}, ' \
+                     f'"y": {self.y}' + "}"
