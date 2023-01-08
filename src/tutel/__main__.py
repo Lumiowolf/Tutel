@@ -84,10 +84,6 @@ def main():
         args.filename = os.path.realpath(args.filename.name)
         with open(args.filename, "r") as file:
             code = file.read()
-        if args.debug:
-            TutelDebugger(code=code, options=options).start()
-        else:
-            Tutel(code=code, options=options).run()
     if not code:
         print("Nothing to execute")
         exit(0)
