@@ -61,6 +61,6 @@ class GuiVsCode(GuiInterface):
         return True
 
     def go_forward(self, turtle_id: int, position: Position) -> bool:
-        request = create_request(method="FORWARD", id=turtle_id, body=get_json(position))
+        request = create_request(method="POSITION", id=turtle_id, body=get_json(position))
         _message(request)
         return True

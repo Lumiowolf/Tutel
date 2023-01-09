@@ -1,4 +1,4 @@
-__version__ = "2.0.3"
+__version__ = "2.0.4"
 
 from .InterpreterModule.Interpreter import Interpreter as TutelInterpreter
 from .LexerModule.Lexer import Lexer as TutelLexer
