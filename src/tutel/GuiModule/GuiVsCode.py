@@ -48,26 +48,14 @@ class GuiVsCode(GuiInterface):
         return True
 
     def set_position(self, turtle_id: int, position: Position) -> bool:
-        self.pen_up(turtle_id)
         request = create_request(method="POSITION", id=turtle_id, body=get_json(position))
         _message(request)
-        self.pen_down(turtle_id)
         return True
 
     def set_orientation(self, turtle_id: int, orientation: Orientation) -> bool:
         request = create_request(method="ORIENTATION", id=turtle_id, body=get_json(orientation))
         _message(request)
         return True
-
-    # def pen_up(self, turtle_id: int) -> bool:
-    #     request = create_request(method="PENUP", id=turtle_id)
-    #     _message(request)
-    #     return True
-    #
-    # def pen_down(self, turtle_id: int) -> bool:
-    #     request = create_request(method="PENDOWN", id=turtle_id)
-    #     _message(request)
-    #     return True
 
     def go_forward(self, turtle_id: int, position: Position) -> bool:
         request = create_request(method="GO", id=turtle_id, body=get_json(position))
