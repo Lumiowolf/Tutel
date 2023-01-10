@@ -1,11 +1,20 @@
 import json
 import sys
+from enum import Enum
 
 from tutel import GuiModule
 from tutel.GuiModule.GuiInterface import GuiInterface
 from tutel.InterpreterModule.Turtle.Color import Color
 from tutel.InterpreterModule.Turtle.Orientation import Orientation
 from tutel.InterpreterModule.Turtle.Position import Position
+
+
+class Methods(Enum):
+    ADD = "ADD"
+    COLOR = "COLOR"
+    POSITION = "POSITION"
+    ORIENTATION = "ORIENTATION"
+    GO = "GO"
 
 
 def _message(msg: str):
@@ -50,17 +59,17 @@ class GuiVsCode(GuiInterface):
         _message(request)
         return True
 
-    def pen_up(self, turtle_id: int) -> bool:
-        request = create_request(method="PENUP", id=turtle_id)
-        _message(request)
-        return True
-
-    def pen_down(self, turtle_id: int) -> bool:
-        request = create_request(method="PENDOWN", id=turtle_id)
-        _message(request)
-        return True
+    # def pen_up(self, turtle_id: int) -> bool:
+    #     request = create_request(method="PENUP", id=turtle_id)
+    #     _message(request)
+    #     return True
+    #
+    # def pen_down(self, turtle_id: int) -> bool:
+    #     request = create_request(method="PENDOWN", id=turtle_id)
+    #     _message(request)
+    #     return True
 
     def go_forward(self, turtle_id: int, position: Position) -> bool:
-        request = create_request(method="POSITION", id=turtle_id, body=get_json(position))
+        request = create_request(method="GO", id=turtle_id, body=get_json(position))
         _message(request)
         return True

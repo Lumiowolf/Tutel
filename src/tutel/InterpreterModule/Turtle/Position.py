@@ -16,7 +16,7 @@ class Position:
             yield el
 
     def dict(self):
-        return {"x": self.x, "y": self.y}
+        return {"position": {"x": self.x, "y": self.y}}
 
     def __repr__(self) -> str:
         return "{" + f'"x": {self.x}, ' \

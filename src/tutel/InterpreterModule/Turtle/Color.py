@@ -21,7 +21,7 @@ class Color:
             yield el
 
     def dict(self):
-        return {"r": self.r, "g": self.g, "b": self.b}
+        return {"color": {"r": self.r, "g": self.g, "b": self.b}}
 
     def __repr__(self) -> str:
         return "{" + f'"r": {self.r}, ' \
