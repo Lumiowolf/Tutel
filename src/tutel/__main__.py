@@ -42,6 +42,7 @@ def get_arg_parser():
         action="store_true",
     )
     arg_parser.add_argument(
+        "-V",
         "--version",
         default=False,
         action="store_true",
