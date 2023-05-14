@@ -1,4 +1,7 @@
-class Position:
+from tutel.InterpreterModule.JsonSerializable import JsonSerializable
+
+
+class Position(JsonSerializable):
     def __init__(self, x, y):
         self.__x = x
         self.__y = y
@@ -17,6 +20,12 @@ class Position:
 
     def dict(self):
         return {"position": {"x": self.x, "y": self.y}}
+
+    def to_json(self):
+        return {
+            "x": self.x,
+            "y": self.y,
+        }
 
     def __repr__(self) -> str:
         return "{" + f'"x": {self.x}, ' \

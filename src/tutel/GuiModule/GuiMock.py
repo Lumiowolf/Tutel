@@ -2,6 +2,7 @@ from tutel.GuiModule.GuiInterface import GuiInterface
 from tutel.InterpreterModule.Turtle.Color import Color
 from tutel.InterpreterModule.Turtle.Orientation import Orientation
 from tutel.InterpreterModule.Turtle.Position import Position
+from tutel.InterpreterModule.Turtle.Turtle import Turtle
 
 
 class GuiMock(GuiInterface):
@@ -24,8 +25,8 @@ class GuiMock(GuiInterface):
         self._message(f"Set orientation of [{turtle_id}] to [{orientation}]")
         return True
 
-    def add_turtle(self, turtle_id: int, color: Color, position: Position, orientation: Orientation) -> bool:
-        self._message(f"Add [{turtle_id}]: [{color}]; [{position}]; [{orientation}]")
+    def add_turtle(self, turtle: Turtle) -> bool:
+        self._message(f"Add [{turtle.id}]: [{turtle.color}]; [{turtle.position}]; [{turtle.orientation}]")
         return True
 
     def go_forward(self, turtle_id: int, position: Position) -> bool:

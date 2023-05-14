@@ -1,5 +1,7 @@
 from typing import Generic, TypeVar
 
+from tutel.InterpreterModule.JsonSerializable import JsonSerializable
+
 T = TypeVar("T")
 
 
@@ -18,12 +20,15 @@ class ValueIterator:
         raise StopIteration
 
 
-class Value(Generic[T]):
+class Value(Generic[T], JsonSerializable):
     def __init__(self, value: T) -> None:
         self.value: T = value
 
     def append(self, val) -> None:
         self.value.append(val)
+
+    def to_json(self):
+        return self.value
 
     def __call__(self, *args, **kwargs):
         return self.value(*args, **kwargs)

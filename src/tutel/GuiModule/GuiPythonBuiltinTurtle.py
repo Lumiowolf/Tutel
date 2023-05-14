@@ -3,7 +3,7 @@ import turtle
 from turtle import Turtle, getscreen, colormode, screensize
 
 from tutel.GuiModule.GuiInterface import GuiInterface
-from tutel.InterpreterModule.TutelBuiltins import Color, Position
+from tutel.InterpreterModule.Turtle import Color, Position, Turtle
 
 
 class GuiPythonBuiltinTurtle(GuiInterface):
@@ -16,26 +16,26 @@ class GuiPythonBuiltinTurtle(GuiInterface):
         print(self.screen.canvwidth)
         print(self.screen.canvheight)
 
-    def add_turtle(self, turtle_id: int, color: Color, position: Position, orientation: int) -> bool:
-        if turtle_id in self.turtles:
+    def add_turtle(self, _turtle: Turtle) -> bool:
+        if _turtle.id in self.turtles:
             return False
         try:
             new_turtle = Turtle()
             new_turtle.speed(0)
             new_turtle.hideturtle()
             new_turtle.penup()
-            new_turtle.color(tuple(color))
-            new_turtle.setpos(position.x, position.y)
+            new_turtle.color(tuple(_turtle.color))
+            new_turtle.setpos(_turtle.position.x, _turtle.position.y)
             distance = turtle.distance(*self.central_point)
             if distance > self.screen.canvheight or distance > self.screen.canvwidth:
                 screensize(math.ceil(distance), math.ceil(distance))
-            new_turtle.setheading(orientation)
+            new_turtle.setheading(_turtle.orientation)
             new_turtle.pendown()
             new_turtle.showturtle()
         except:
             return False
 
-        self.turtles[turtle_id] = new_turtle
+        self.turtles[_turtle.turtle_id] = new_turtle
         return True
 
     def go_forward(self, turtle_id: int, a: int) -> bool:

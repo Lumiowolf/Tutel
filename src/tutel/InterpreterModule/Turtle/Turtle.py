@@ -3,11 +3,12 @@ import math
 from tutel import GuiModule
 from tutel.GuiModule import GuiInterface
 from tutel.InterpreterModule.Turtle.Color import Color
+from tutel.InterpreterModule.JsonSerializable import JsonSerializable
 from tutel.InterpreterModule.Turtle.Orientation import Orientation
 from tutel.InterpreterModule.Turtle.Position import Position
 
 
-class Turtle:
+class Turtle(JsonSerializable):
     default_id = 0
     id = 0
 
@@ -23,10 +24,7 @@ class Turtle:
     def turtle_init(cls) -> "Turtle | None":
         turtle = cls()
         if GuiModule.GUI.add_turtle(
-                turtle_id=turtle.id,
-                color=turtle.color,
-                position=turtle.position,
-                orientation=turtle.orientation
+                turtle=turtle,
         ) or type(GuiModule.GUI) == GuiInterface:
             return turtle
 
@@ -86,6 +84,13 @@ class Turtle:
             )
             if GuiModule.GUI.go_forward(self.id, new_position) or type(GuiModule.GUI) == GuiInterface:
                 self.position = new_position
+
+    def to_json(self):
+        return {
+            "color": self.color,
+            "position": self.position,
+            "orientation": self.orientation,
+        }
 
     def __repr__(self):
         return "{" + f'"id": {self.id}, ' \

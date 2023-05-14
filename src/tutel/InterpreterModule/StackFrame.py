@@ -2,17 +2,42 @@ import tutel
 from tutel.InterpreterModule.Value import Value
 
 
-class StackFrame:
+class StackFrame(dict):
     index = 0
 
     def __init__(self, name, lineno):
+        super().__init__()
         self.index = StackFrame.index
         StackFrame.index += 1
         self.name = name
         self.lineno = lineno
-        self.locals: dict[str, Value] = {}
+        self.locals = {}
         if tutel.VERBOSE:
             print(f"Created frame {self.index}")
+
+    @property
+    def name(self) -> str:
+        return self["name"]
+
+    @name.setter
+    def name(self, n):
+        self["name"] = n
+
+    @property
+    def lineno(self) -> int:
+        return self["lineno"]
+
+    @lineno.setter
+    def lineno(self, lno):
+        self["lineno"] = lno
+
+    @property
+    def locals(self) -> dict[str, Value]:
+        return self["locals"]
+
+    @locals.setter
+    def locals(self, loc):
+        self["locals"] = loc
 
     def increment_lineno(self):
         if tutel.VERBOSE:

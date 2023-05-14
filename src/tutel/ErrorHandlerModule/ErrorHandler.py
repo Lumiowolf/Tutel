@@ -2,10 +2,10 @@ import logging
 import time
 
 from tutel.ErrorHandlerModule.ErrorType import TutelException
-from tutel.InterpreterModule.StackFrame import StackFrame
+from tutel.InterpreterModule.Stack import Stack
 
 
-def get_stack_trace(call_stack: list[StackFrame] = None):
+def get_stack_trace(call_stack: Stack = None):
     if call_stack:
         trace = "Traceback (most recent call last):\n"
         for frame in call_stack:
@@ -22,7 +22,7 @@ class ErrorHandler:
         ch.setFormatter(formatter)
         self.logger.addHandler(ch)
 
-    def handle_error(self, error: TutelException, call_stack: list[StackFrame] = None) -> None:
+    def handle_error(self, error: TutelException, call_stack: Stack = None) -> None:
         stack_trace = None
         if call_stack:
             stack_trace = get_stack_trace(call_stack)

@@ -4,13 +4,14 @@ from typing import Callable
 from tutel.ErrorHandlerModule.ErrorHandler import ErrorHandler
 from tutel.ErrorHandlerModule.ErrorType import MismatchedArgsCountException, OutOfRangeException, NothingToRunException, \
     RecursionException, \
-    BuiltinFunctionShadowException, TypeException
+    BuiltinFunctionShadowException, TypeException, Exit
 from tutel.ErrorHandlerModule.ErrorType import NotIterableException, CannotAssignException, NotDefinedException, \
     UnsupportedOperandException, BadOperandForUnaryException, AttributeException
 from tutel.InterpreterModule import TutelBuiltins
 from tutel.InterpreterModule.Stack import Stack
 from tutel.InterpreterModule.StackFrame import StackFrame
 from tutel.InterpreterModule.Turtle.Turtle import Turtle
+from tutel.InterpreterModule.TutelDebuggerInterface import TutelDebuggerInterface
 from tutel.InterpreterModule.Value import Value
 from tutel.ParserModule import Classes
 
@@ -35,8 +36,13 @@ def update_lineno(func):
 
 
 class Interpreter:
-    def __init__(self, error_handler_: ErrorHandler = None, debugger=None) -> None:
+    def __init__(self, error_handler_: ErrorHandler = None, debug=False,
+                 debugger: TutelDebuggerInterface = None) -> None:
         self.call_stack = Stack()
+        self.dropped_frame = None
+        self.running = False
+        self.stopped = False
+        self.debug = debug
         self.program_to_execute = None
         self.start_with_fun = None
         self.builtins = TutelBuiltins
@@ -50,14 +56,16 @@ class Interpreter:
         self.error_handler = error_handler_
         if self.error_handler is None:
             self.error_handler = ErrorHandler(module="interpreter")
-        self.debugger = debugger
 
-    @property
-    def curr_frame(self) -> StackFrame:
-        return self.call_stack[-1]
+        self.debugger = debugger
+        if self.debug and not self.debugger:
+            self.debugger = TutelDebuggerInterface()
 
     def clean_up(self):
         self.call_stack = Stack()
+        self.dropped_frame = None
+        self.running = False
+        self.stopped = False
         self.program_to_execute = None
         self.start_with_fun = None
         self.builtins = TutelBuiltins
@@ -70,6 +78,10 @@ class Interpreter:
         Turtle.id = Turtle.default_id
 
     @property
+    def curr_frame(self) -> StackFrame:
+        return self.call_stack[-1]
+
+    @property
     def lineno(self) -> int:
         return self.__lineno
 
@@ -78,6 +90,7 @@ class Interpreter:
         if lineno != self.lineno:
             self.curr_frame.lineno = lineno
             self.__lineno = lineno
+            # self.debugger.check_line()
             if self.debugger:
                 self.debugger.on_line_change(lineno, self.curr_frame)
 
@@ -110,9 +123,13 @@ class Interpreter:
         self.call_stack.append(StackFrame(fname, lineno))
 
     def _drop_stack_frame(self):
-        dropped_frame = self.call_stack.pop()
+        self.dropped_frame = self.call_stack.pop()
+        # self.debugger.check_line()
         if self.debugger:
-            self.debugger.on_frame_drop(dropped_frame)
+            self.stopped = True
+            while self.stopped:
+                pass
+        self.dropped_frame = None
 
     def _add_functions_to_globals(self, program_: Classes.Program):
         for fun_name in program_.functions:
@@ -153,6 +170,26 @@ class Interpreter:
     @staticmethod
     def _is_assignable(obj):
         return issubclass(type(obj), Classes.Assignable)
+
+    def execute(self, program_to_execute: Classes.Program, start_with_fun_name: str = None):
+        self.clean_up()
+        self.running = True
+        self.program_to_execute = program_to_execute
+        self.__lineno = program_to_execute.lineno
+        if len(self.program_to_execute.functions) == 0:
+            self.error_handler.handle_error(NothingToRunException(), self.call_stack)
+        self._add_functions_to_globals(self.program_to_execute)
+        if start_with_fun_name in self.program_to_execute.functions.keys():
+            self.start_with_fun = start_with_fun_name
+        elif start_with_fun_name is None:
+            self.start_with_fun = list(self.program_to_execute.functions.keys())[0]
+        else:
+            self.error_handler.handle_error(NotDefinedException(name=start_with_fun_name), self.call_stack)
+        try:
+            self.program_globals[self.start_with_fun].accept(self)
+        except RecursionError:
+            self.error_handler.handle_error(RecursionException(), self.call_stack)
+        self.running = False
 
     def visit_program(self, _):
         self.start_with_fun.accept(self)

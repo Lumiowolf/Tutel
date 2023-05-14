@@ -1,4 +1,7 @@
-class Color:
+from tutel.InterpreterModule.JsonSerializable import JsonSerializable
+
+
+class Color(JsonSerializable):
     def __init__(self, r, g, b):
         self.__r = r if r in range(0, 256) else 0 if r < 0 else 255
         self.__g = g if g in range(0, 256) else 0 if g < 0 else 255
@@ -22,6 +25,13 @@ class Color:
 
     def dict(self):
         return {"color": {"r": self.r, "g": self.g, "b": self.b}}
+
+    def to_json(self):
+        return {
+            "r": self.r,
+            "g": self.g,
+            "b": self.b,
+        }
 
     def __repr__(self) -> str:
         return "{" + f'"r": {self.r}, ' \

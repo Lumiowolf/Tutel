@@ -7,7 +7,7 @@ from time import sleep
 
 import tutel
 from tutel import Tutel, TutelOptions
-from tutel.TutelDebugger import TutelDebugger
+from tutelDebugger.TutelDebugger import TutelDebugger
 
 
 def get_arg_parser():
