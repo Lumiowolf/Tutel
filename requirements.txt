@@ -1,1 +1,1 @@
-parameterized~=0.8.1
+websockets~=11.0.3

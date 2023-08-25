@@ -21,5 +21,5 @@ sierpinski_triangle(turtle, rank, length, colors) {
 main() {
     colors = [Color(252, 90, 141), Color(0, 0, 255)];
     turtle = Turtle();
-    sierpinski_triangle(turtle, 6, 600, colors);
+    sierpinski_triangle(turtle, 7, 600, colors);
 }

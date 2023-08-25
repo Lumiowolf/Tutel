@@ -4,14 +4,14 @@ from io import StringIO
 
 from parameterized import parameterized
 
-from tutel.ErrorHandlerModule.ErrorHandler import ErrorHandler
-from tutel.ErrorHandlerModule.ErrorType import IdentifierTooLongLexerException, TextConstTooLongLexerException, \
+from Tutel.common.ErrorHandler import ErrorHandler
+from Tutel.common.ErrorType import IdentifierTooLongLexerException, TextConstTooLongLexerException, \
     CommentTooLongLexerException, \
     UnknownTokenLexerException, UnterminatedStringLexerException, IntegerTooLargeLexerException, \
     LeadingZerosInIntegerLexerException, UnknownEscapingLexerException
-from tutel.LexerModule.Constants import MAX_IDENTIFIER_LENGTH, MAX_TEXT_CONST_LENGTH, MAX_COMMENT_LENGTH
-from tutel.LexerModule.Lexer import Lexer, Token
-from tutel.LexerModule.Tokens import operators, TokenType, keywords
+from Tutel.core.LexerModule.Lexer import Lexer, Token
+from Tutel.core.LexerModule.Lexer import MAX_IDENTIFIER_LENGTH, MAX_TEXT_CONST_LENGTH, MAX_COMMENT_LENGTH
+from Tutel.core.LexerModule.Lexer import operators, TokenType, keywords
 
 
 class TestLexerSimple(unittest.TestCase):
