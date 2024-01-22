@@ -1,0 +1,20 @@
+main() {
+	turtle1 = Turtle();
+	turtle1.set_position(Position(500, 500));
+	draw_spiral(turtle1, 100);
+	#turtle2 = Turtle();
+	#turtle2.set_position(Position(3000, 3000));
+	#draw_spiral(turtle2);
+}
+
+draw_spiral(turtle, magic_number) {
+	colors = [Color(255, 0, 0), Color(0, 255, 255), Color(255, 255, 0), Color(0, 255, 0)];
+	#colors = [Color(255, 255, 0)];
+	base_step = 1;
+	for(i in range(5000)) {
+		a = turtle.orientation;
+		turtle.set_orientation(a + i % magic_number - i % magic_number//2);
+		turtle.forward(base_step + i);
+		turtle.set_color(colors[i % len(colors)]);
+	}
+}

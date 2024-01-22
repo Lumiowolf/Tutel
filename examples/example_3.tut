@@ -1,0 +1,18 @@
+main() {
+	turtles = [];
+	colors = [Color(255, 0, 0), Color(0, 255, 255), Color(0, 255, 0), Color(255, 255, 0), Color(128, 128, 128)] * 4;
+	for(i in range(20)) {
+		turtles.append(Turtle());
+		turtles[-1].set_color(colors[i]);
+		turtles[-1].set_position(Position(0, 100 * i));
+		turtles[-1].set_orientation(90);
+	}
+	for(turtle in turtles) {
+		for(i in range(100)) {
+			turtle.forward(20);
+			turtle.turn_left();
+			turtle.forward(20);
+			turtle.turn_right();
+		}
+	}
+}

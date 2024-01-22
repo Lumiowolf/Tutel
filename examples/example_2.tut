@@ -1,0 +1,10 @@
+main() {
+    turtle = Turtle();
+    turtle.set_position(Position(500, 500));
+    base = 10;
+    for(i in range(100)){
+        turtle.forward(base);
+        base += 5 * i;
+        turtle.turn_right();
+    }
+}

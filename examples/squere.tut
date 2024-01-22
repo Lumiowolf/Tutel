@@ -1,0 +1,24 @@
+sierpinski_square(turtle, rank, length) {
+	if(rank == 0) {
+		for(_ in range(4)) {
+			turtle.forward(length);
+			turtle.turn_left();
+		}
+		return;
+	}
+
+	for(_ in range(4)) {
+		for(_ in range(2)) {
+			turtle.forward(length / 3);
+			sierpinski_square(turtle, rank - 1, length / 3);
+		}
+		turtle.forward(length / 3);
+		turtle.turn_left();
+	}
+}
+
+main() {
+	turtle = Turtle();
+	turtle.set_color(Color(255, 255, 0));
+	sierpinski_square(turtle, 3, 300);
+}

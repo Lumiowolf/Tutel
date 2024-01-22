@@ -1,6 +1,1 @@
-parameterized~=0.8.1
-PyQt6
-PySide6
-pyqtdarktheme
-numpy
-mutableint
+websockets~=11.0.3
