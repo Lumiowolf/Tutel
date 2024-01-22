@@ -4,14 +4,13 @@ from io import StringIO
 
 from parameterized import parameterized
 
-from tutel.ErrorHandlerModule.ErrorHandler import ErrorHandler
-from tutel.ErrorHandlerModule.ErrorType import InterpreterException, NothingToRunException, RecursionException, \
+from Tutel.common.ErrorHandler import ErrorHandler
+from Tutel.common.ErrorType import InterpreterException, NothingToRunException, RecursionException, \
     NotDefinedException, NotIterableException, CannotAssignException, UnsupportedOperandException, \
     BadOperandForUnaryException, AttributeException, MismatchedArgsCountException, OutOfRangeException, TypeException
-from tutel.GuiModule.GuiMock import GuiMock
-from tutel.InterpreterModule.Interpreter import Interpreter
-from tutel.LexerModule.Lexer import Lexer
-from tutel.ParserModule.Parser import Parser
+from Tutel.core.InterpreterModule.Interpreter import Interpreter
+from Tutel.core.LexerModule.Lexer import Lexer
+from Tutel.core.ParserModule.Parser import Parser
 
 
 def get_error_handler():
@@ -20,7 +19,7 @@ def get_error_handler():
 
 class TestInterpreter(unittest.TestCase):
     # def setUp(self) -> None:
-    #     from tutel.InterpreterModule.Interpreter import set_gui
+    #     from Tutel.InterpreterModule.Interpreter import set_gui
     #     set_gui(GuiMock(verbose=True))
 
     @parameterized.expand([

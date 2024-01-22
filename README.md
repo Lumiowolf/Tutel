@@ -269,6 +269,13 @@ Dodatkowo do testów manualnych zostały napisane 4 przykładowe skrypty, każdy
 * Testy jednostkowe sprawdzające użycie wbudowanych klas/funkcji języka.
 * Testy sprawdzające czy wykonanie zacznie się od zadanej funkcji.
 
-### 5.3. Testowanie finalnej aplikacji z GUI
+## 6. Użytkowanie
+### 6.1. Wymagania
 
-Testy manualne, czyli próby wykonania przykładowych skryptów.
+* Python 3.10+
+
+### 6.2. Instalacja
+
+```console
+$ python -m pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple Tutel --upgrade
+```

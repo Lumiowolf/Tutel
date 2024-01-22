@@ -20,5 +20,5 @@ sierpinski_square(turtle, rank, length) {
 main() {
 	turtle = Turtle();
 	turtle.set_color(Color(255, 255, 0));
-	sierpinski_square(turtle, 5, 300);
+	sierpinski_square(turtle, 3, 300);
 }
