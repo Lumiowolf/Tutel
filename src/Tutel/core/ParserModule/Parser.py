@@ -59,9 +59,17 @@ class LexerInterface:
 
 class Parser:
     def __init__(self, error_handler: ErrorHandler = ErrorHandler(module="parser")) -> None:
-        self.lexer = None
+        self.__lexer = None
         self.functions: dict[str, Function] = {}
         self.error_handler = error_handler
+
+    @property
+    def lexer(self) -> LexerInterface:
+        return self.__lexer
+
+    @lexer.setter
+    def lexer(self, lexer: Lexer) -> None:
+        self.__lexer = LexerInterface(lexer)
 
     def _check_and_consume(self, token_type: TokenType) -> bool:
         if not self._token_is(token_type):
@@ -80,7 +88,7 @@ class Parser:
         return self.lexer.token.type == token_type
 
     def parse(self, lexer: Lexer) -> Program:
-        self.lexer = LexerInterface(lexer)
+        self.lexer = lexer
         self.functions = {}
         lineno = self.lexer.get_lineno()
 

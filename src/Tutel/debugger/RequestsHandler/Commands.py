@@ -12,11 +12,13 @@ class Command(Enum):
     STOP = auto()
     EXIT = auto()
     CONTINUE = auto()
-    STEP = auto()
-    NEXT = auto()
+    STEP_INTO = auto()
+    STEP_OVER = auto()
+    PAUSE = auto()
     STACK = auto()
     FRAME = auto()
     BREAK = auto()
+    BREAK_EXPRESSION = auto()
     CLEAR = auto()
 
 
@@ -33,14 +35,15 @@ TEXT_TO_COMMAND = {
     "exit": Command.EXIT,
     "c": Command.CONTINUE,
     "continue": Command.CONTINUE,
-    "s": Command.STEP,
-    "step": Command.STEP,
-    "n": Command.NEXT,
-    "next": Command.NEXT,
+    "step_into": Command.STEP_INTO,
+    "s": Command.STEP_OVER,
+    "step_over": Command.STEP_OVER,
+    "pause": Command.PAUSE,
     "stack": Command.STACK,
     "frame": Command.FRAME,
     "b": Command.BREAK,
     "break": Command.BREAK,
+    "break_expr": Command.BREAK_EXPRESSION,
     "clear": Command.CLEAR,
     "get_bp_lines": Command.BP_LINES,
 }
@@ -54,17 +57,8 @@ ZERO_ARG_COMMANDS = [
     Command.STOP,
     Command.EXIT,
     Command.CONTINUE,
-    Command.STEP,
-    Command.NEXT,
+    Command.STEP_INTO,
+    Command.STEP_OVER,
+    Command.PAUSE,
     Command.STACK,
-]
-
-ZERO_OR_ONE_ARG_COMMANDS = [
-    Command.BREAK,
-    Command.CLEAR,
-]
-
-ONE_ARG_COMMANDS = [
-    Command.FILE,
-    Command.FRAME,
 ]

@@ -39,7 +39,7 @@ def update_lineno(func):
 class Interpreter:
     def __init__(self, error_handler_: ErrorHandler = None,
                  debug_callback: Callable = mock_debug_callback) -> None:
-        self.call_stack = Stack()
+        self.call_stack: list[StackFrame] = Stack()
         self.dropped_frame = None
         self.program_to_execute = None
         self.start_with_fun = None
@@ -49,6 +49,8 @@ class Interpreter:
         self.last_returned = None
         self.do_else = True
         self.function_args = None
+        self.in_loop = False
+        self.lineno_update_enabled = True
         self.__lineno = -1
 
         self.error_handler = error_handler_
@@ -74,7 +76,9 @@ class Interpreter:
         self.last_returned = None
         self.do_else = True
         self.function_args = None
+        self.in_loop = False
         self.__lineno = -1
+        self._stopped = False
         Turtle.id = Turtle.default_id
 
     @property
@@ -88,11 +92,12 @@ class Interpreter:
     @lineno.setter
     def lineno(self, lineno: int):
         if self._stopped:
-            raise Stop()
-        if lineno != self.lineno:
-            self.curr_frame.lineno = lineno
-            self.__lineno = lineno
-            self.debug_callback()
+            raise Stop
+        if self.lineno_update_enabled:
+            if lineno != self.lineno or self.in_loop:
+                self.curr_frame.lineno = lineno
+                self.__lineno = lineno
+                self.debug_callback()
 
     def _add_stack_frame(self, fname: str = None, lineno: int = None):
         self.call_stack.append(StackFrame(fname, lineno))
@@ -234,6 +239,7 @@ class Interpreter:
         iterator = for_stmt.iterator.accept(self)
         iterable = self._get_variable_or_instant_value(for_stmt.iterable)
         try:
+            self.in_loop = True
             for i in iterable:
                 self._set_local_var(iterator, i)
                 for_stmt.statements.accept(self)
@@ -242,13 +248,17 @@ class Interpreter:
         except TypeError:
             self.error_handler.handle_error(NotIterableException(type_name=type(iterable.value).__name__),
                                             self.call_stack)
+        finally:
+            self.in_loop = False
 
     @update_lineno
     def visit_while_statement(self, while_stmt: Classes.WhileStatement):
         while while_stmt.condition.accept(self):
+            self.in_loop = True
             while_stmt.statements.accept(self)
             if self.return_flag:
                 break
+        self.in_loop = False
 
     @update_lineno
     def visit_return_statement(self, return_stmt: Classes.ReturnStatement):

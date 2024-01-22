@@ -13,7 +13,7 @@ if __name__ == '__main__':
     test = [StackFrame("main", 23)]
     test[-1].locals["var"] = Value(25)
     test.append(StackFrame("boo", 1))
-    print(json.dumps({"event": "stack_trace", "body": {"stack": test}}))
+    print(json.dumps({"type": "stack_trace", "body": {"stack": test}}))
 
     e = NotIterableException(str)
-    print(json.dumps({"event": "post_mortem", "body": {"error": str(e)}}))
+    print(json.dumps({"type": "post_mortem", "body": {"error": str(e)}}))

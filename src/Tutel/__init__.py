@@ -1,4 +1,4 @@
-__version__ = "2.3.6"
+__version__ = "2.5.1"
 
 from Tutel import core
 from Tutel import debugger

@@ -2,6 +2,9 @@ class Visited:
     def __init__(self, lineno: int):
         self.lineno = lineno
 
+    def accept(self, visitor):
+        pass
+
 
 class Program(Visited):
     def __init__(self, functions: dict[str, "Function"], lineno: int, main: str = "main") -> None:

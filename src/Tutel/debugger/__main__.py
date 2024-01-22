@@ -4,10 +4,10 @@ import os
 import signal
 import sys
 import threading
-from threading import Thread
 from time import sleep
 
 from Tutel.core.Runner.TutelOptions import TutelOptions
+from Tutel.debugger.RequestsHandler.StdRequestsHandler import StdRequestsHandler
 from Tutel.debugger.RequestsHandler.WebSocketsRequestsHandler import WebSocketsRequestsHandler
 from Tutel.debugger.TutelDebuggerInteractive import TutelDebuggerInteractive
 
@@ -59,13 +59,14 @@ def main():
     if args.filename:
         args.filename = os.path.realpath(args.filename.name)
     if args.port:
-        handler = WebSocketsRequestsHandler(args.port)
-        handler_thread = Thread(target=handler.start, daemon=True)
-        handler_thread.start()
-        interpreter = TutelDebuggerInteractive(requests_handler=handler, filename=args.filename, options=options)
+        # Init class
+        WebSocketsRequestsHandler.port = args.port
+
+        communication_cls = WebSocketsRequestsHandler
     else:
-        interpreter = TutelDebuggerInteractive(filename=args.filename, options=options)
-    debugger_thread = threading.Thread(target=interpreter.start)
+        communication_cls = StdRequestsHandler
+    debugger = TutelDebuggerInteractive(communication_class=communication_cls, filename=args.filename, options=options)
+    debugger_thread = threading.Thread(target=debugger.start)
     debugger_thread.start()
     while debugger_thread.is_alive():
         debugger_thread.join(0.5)

@@ -61,7 +61,7 @@ class CommandNotEndedProperly(TutelDebuggerException):
         return msg.encode("unicode-escape").decode()
 
 
-class ClientConnectionBroken(TutelDebuggerException):
+class SourceFileNotFound(TutelDebuggerException):
     def __init__(self, path) -> None:
         super().__init__()
         self.path = path
@@ -71,7 +71,7 @@ class ClientConnectionBroken(TutelDebuggerException):
         return msg.encode("unicode-escape").decode()
 
 
-class SourceFileNotFound(TutelDebuggerException):
+class ClientConnectionBroken(TutelDebuggerException):
     def __str__(self) -> str:
         msg = f"{self.base_msg}" \
               f"Connection with client closed unexpectedly."
